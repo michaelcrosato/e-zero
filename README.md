@@ -1,5 +1,9 @@
 # E-ZERO
 
+[![CI](https://github.com/michaelcrosato/e-zero/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelcrosato/e-zero/actions/workflows/ci.yml)
+
+**[Play it →](https://e-zero.vercel.app)**
+
 A 100-racer, three-lap anti-gravity racer that runs entirely in the browser. No
 network calls, no image assets, no game engine — the track, the city, the craft
 and the sky are all generated in code at load time and drawn to a 2D canvas with

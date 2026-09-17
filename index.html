@@ -199,26 +199,19 @@
           <div class="control"><kbd>ESC</kbd> PAUSE</div>
         </div>
         <div class="footer-note">
-          <span>A SMALL GAME ABOUT GOING VERY FAST.</span><br />ORIGINAL ART · SYNTHESIZED AUDIO · NO
-          NETWORK
+          <span>A SMALL GAME ABOUT GOING VERY FAST.</span><br />ORIGINAL ART · SYNTHESIZED AUDIO ·
+          NO NETWORK
         </div>
       </footer>
       <p id="announcer" class="sr-only" aria-live="polite"></p>
     </main>
     <!--
       Optional race music. The file is NOT in version control (see docs/AUDIO.md).
-      When it is absent the element simply fails to load and the game runs with
-      its Web Audio engine and effects only - playback is never required.
+      The src is set at runtime only when a file was present at build time, so a
+      deployment without one does not request a URL that 404s. Playback is never
+      required: the engine and effects are synthesised with Web Audio.
     -->
-    <audio
-      id="raceMusic"
-      preload="auto"
-      loop
-      playsinline
-      hidden
-      aria-hidden="true"
-      src="/audio/mute-city.mp3"
-    ></audio>
+    <audio id="raceMusic" preload="auto" loop playsinline hidden aria-hidden="true"></audio>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

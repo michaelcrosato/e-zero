@@ -19,6 +19,8 @@ export class Sound {
   context: AudioContext | null = null;
   musicError: string | null = null;
   musicBlocked = false;
+  /** False when no music file was present at build time. See docs/AUDIO.md. */
+  readonly hasMusic: boolean = Boolean(__MUSIC_SRC__);
 
   private readonly music: HTMLAudioElement;
   private master: GainNode | null = null;
@@ -34,6 +36,9 @@ export class Sound {
 
   constructor() {
     this.music = el.raceMusic;
+    // Setting src only when a file exists avoids a guaranteed 404 on every load
+    // of a deployment that ships without music.
+    if (this.hasMusic) this.music.src = __MUSIC_SRC__;
     // This level also works when Web Audio is unavailable and the element plays natively.
     this.music.volume = 0.234;
     this.music.addEventListener('error', () => {
@@ -51,6 +56,7 @@ export class Sound {
   }
 
   startMusic(): void {
+    if (!this.hasMusic) return;
     this.music.pause();
     try {
       this.music.currentTime = 0;
@@ -63,6 +69,7 @@ export class Sound {
   }
 
   syncMusic(): void {
+    if (!this.hasMusic) return;
     const active = ACTIVE_MODES.includes(game.mode);
     this.music.muted = !this.enabled;
     if (!active) {
@@ -160,16 +167,17 @@ export class Sound {
       this.jet.start();
 
       // Route the music through the same mute control as the effects.
-      try {
-        const gain = a.createGain();
-        gain.gain.value = 1.3;
-        const source = a.createMediaElementSource(this.music);
-        source.connect(gain).connect(this.master);
-        this.musicGain = gain;
-        this.music.volume = 1;
-      } catch {
-        // Native media playback remains available without this mixer stage.
-      }
+      if (this.hasMusic)
+        try {
+          const gain = a.createGain();
+          gain.gain.value = 1.3;
+          const source = a.createMediaElementSource(this.music);
+          source.connect(gain).connect(this.master);
+          this.musicGain = gain;
+          this.music.volume = 1;
+        } catch {
+          // Native media playback remains available without this mixer stage.
+        }
 
       if (a.state === 'suspended') void a.resume().catch(() => {});
     } catch {

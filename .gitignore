@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+.vite/
+*.tsbuildinfo
+
+# Test artifacts
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Environment / editor / OS
+.env
+.env.*
+!.env.example
+.vercel
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Licensed audio - NOT redistributable.
+# The original single-file build embedded a copyrighted MP3 ("Mute City",
+# Yumiko Kanki / (C) 1990 Nintendo) as a base64 data URI. It is kept out of
+# version control. See docs/AUDIO.md.
+# ---------------------------------------------------------------------------
+public/audio/*.mp3
+e-zero-v6.html

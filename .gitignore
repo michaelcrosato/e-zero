@@ -31,3 +31,7 @@ Thumbs.db
 # ---------------------------------------------------------------------------
 public/audio/*.mp3
 e-zero-v6.html
+
+# Unrelated single-file app that lives in this working directory but is not
+# part of this project.
+BOUNDLESS-v0.3.html

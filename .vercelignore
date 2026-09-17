@@ -1,0 +1,18 @@
+# Never upload these to the deployment.
+
+.git
+node_modules
+dist
+coverage
+test-results
+playwright-report
+
+# The original single-file build. 5.9 MB, of which 4.4 MB is a copyrighted
+# MP3 embedded as a data URI. Not redistributable - see docs/AUDIO.md.
+e-zero-v6.html
+
+# Licensed audio drop-ins are local only.
+public/audio/*.mp3
+
+# Unrelated single-file app that shares this working directory.
+BOUNDLESS-v0.3.html

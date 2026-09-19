@@ -26,6 +26,7 @@
           ><span class="brand-tag">LOW ALTITUDE. HIGH SPEED.</span>
         </div>
         <div class="top-actions">
+          <button class="utility" id="onlineRaceExit" hidden>LEAVE ROOM</button>
           <button class="utility" id="soundButton" aria-label="Turn sound off">
             <span class="sound-dot"></span><span id="soundLabel">SOUND ON</span>
           </button>
@@ -47,7 +48,7 @@
             <div>
               <div class="hud-label">POSITION</div>
               <div class="position-value">
-                <span id="positionValue">100</span><small>/ 100</small>
+                <span id="positionValue">100</span><small id="fieldSize">/ 100</small>
               </div>
               <div class="field-status" id="fieldStatus">START / LAST PLACE</div>
             </div>
@@ -116,10 +117,58 @@
               <div class="stat"><b>03</b><span>LAPS</span></div>
               <div class="stat"><b>2.4×</b><span>BOOST SPEED</span></div>
             </div>
+            <button class="online-entry" id="onlineButton">PLAY ONLINE · 2–4 PLAYERS ↗</button>
           </div>
           <div class="live-tag"><i></i> 100 ON TRACK / 006</div>
           <div class="track-label"><b>NEON HARBOR</b><span>AFTER DARK. ABOVE WATER.</span></div>
         </div>
+        <div
+          class="overlay online-overlay hidden"
+          id="onlineOverlay"
+          role="region"
+          aria-labelledby="onlineHeading"
+        >
+          <div class="online-panel">
+            <p class="eyebrow">NEON HARBOR / MULTIPLAYER</p>
+            <h2 id="onlineHeading">ONLINE RACE</h2>
+            <div id="onlineSetup">
+              <label for="onlineName">YOUR NAME</label>
+              <input id="onlineName" maxlength="16" placeholder="RACER" autocomplete="nickname" />
+              <button class="primary" id="onlineCreate">CREATE ROOM ↗</button>
+              <label for="onlineJoinCode">OR JOIN A FRIEND’S ROOM</label>
+              <div class="online-join-row">
+                <input
+                  id="onlineJoinCode"
+                  maxlength="8"
+                  placeholder="ROOM CODE"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="primary" id="onlineJoin">JOIN ↗</button>
+              </div>
+            </div>
+            <div id="onlineRoom" hidden>
+              <div class="online-invite" id="onlineInvite">
+                <span class="online-room-code" id="onlineCode"></span>
+                <button class="secondary" id="onlineCopy">COPY INVITE LINK</button>
+              </div>
+              <p id="onlineCount">1 / 4 PLAYERS</p>
+              <ol class="online-roster" id="onlineRoster" aria-label="Players and standings"></ol>
+              <button class="primary" id="onlineReady">READY</button>
+              <button class="primary" id="onlineStart">START RACE ↗</button>
+              <button class="primary" id="onlineRematch" hidden>BACK TO LOBBY ↗</button>
+            </div>
+            <p class="online-status" id="onlineStatus" role="status"></p>
+            <button class="secondary" id="onlineLeave" hidden>LEAVE ROOM</button>
+            <button class="secondary" id="onlineBack">BACK TO SOLO</button>
+          </div>
+        </div>
+        <p
+          class="online-standings"
+          id="onlineStandings"
+          aria-label="Live online standings"
+          hidden
+        ></p>
         <div class="overlay paused-overlay hidden" id="pauseOverlay">
           <div class="modal">
             <p class="eyebrow">ENGINE ON HOLD</p>
@@ -200,7 +249,7 @@
         </div>
         <div class="footer-note">
           <span>A SMALL GAME ABOUT GOING VERY FAST.</span><br />ORIGINAL ART · SYNTHESIZED AUDIO ·
-          NO NETWORK
+          SOLO + ONLINE RACING
         </div>
       </footer>
       <p id="announcer" class="sr-only" aria-live="polite"></p>

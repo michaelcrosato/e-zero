@@ -4,8 +4,8 @@
 
 **[Play it →](https://e-zero.vercel.app)**
 
-A 100-racer, three-lap anti-gravity racer that runs entirely in the browser. No
-network calls, no image assets, no game engine — the track, the city, the craft
+A 100-racer, three-lap anti-gravity racer with private online races for 2–4 friends.
+No image assets or game engine — the track, the city, the craft
 and the sky are all generated in code at load time and drawn to a 2D canvas with
 a Mode 7 style per-pixel ground renderer.
 
@@ -31,6 +31,24 @@ pnpm dev          # http://localhost:5319
 | Camera  | `C` (auto pilot / free run) |
 
 Touch controls appear automatically on coarse-pointer devices.
+
+## Play online
+
+Choose **PLAY ONLINE**, enter a name, and **CREATE ROOM**. Share the invite link
+or eight-character code with up to three friends. Everyone joining presses
+**READY**, then the host starts the race. Three laps, live standings, and a shared
+results screen; the host can return everyone to the lobby for a rematch.
+
+Online is a head-to-head race with non-contact human craft and no AI. Each racer
+has a matching craft colour in the lobby, world and map. Solo still has the original
+99 AI rivals. Online races cannot be paused or restarted individually. Keep the
+host's tab open; if the host leaves, the room closes. A disconnected guest is
+marked disconnected in the standings.
+
+Multiplayer uses WebRTC and public PeerJS signaling/relay services, with no account
+or game server to configure. Some networks may block WebRTC; connection failures
+return to the room screen with a retry message. See [multiplayer details](docs/MULTIPLAYER.md)
+for deployment options, networking limits and browser checks.
 
 ## How it works
 

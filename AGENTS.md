@@ -9,6 +9,12 @@ Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before changing anything in
 
 ## Verify before claiming anything works
 
+After every successful change request, run the relevant checks below, then commit
+the task's changes and push the current branch to GitHub so the deployed game can
+be playtested. This is standing user authorization; do not ask again. Never include
+unrelated work or secrets, skip failing checks, or force-push. Report the commit
+and push outcome; if a check or push fails, fix it or report the actual blocker.
+
 ```
 pnpm verify        # typecheck + lint + unit tests + build
 pnpm test:e2e      # browser suite, including original-parity

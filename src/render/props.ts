@@ -17,6 +17,7 @@ import { drawCraft } from './craft';
 import { project, type Projected } from './project';
 import { sphereSprites } from './sprites';
 import { surface } from './surface';
+import { online, remoteCraft } from '../online/state';
 
 /** Objects beyond this depth are not drawn. */
 const FAR_DEPTH = 1850;
@@ -152,7 +153,9 @@ export function drawObjects(demo: boolean): void {
         x: r.lane * (widthAt(game.demoS + r.startS) - 24),
         color: r.color,
       }))
-    : rivals;
+    : online.racing
+      ? remoteCraft
+      : rivals;
 
   for (const r of cars) {
     const p = sample(r.s, r.x);
@@ -174,7 +177,7 @@ export function drawObjects(demo: boolean): void {
     if (ob.kind === 'player') {
       drawCraft(
         ob.p,
-        0,
+        online.racing ? (online.racers.find((r) => r.id === online.id)?.slot ?? 0) : 0,
         demo ? Math.sin(game.worldTime) * 0.18 : player.steer * 0.75 + player.kickV * 0.0015,
         true,
       );

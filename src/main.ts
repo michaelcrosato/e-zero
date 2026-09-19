@@ -21,6 +21,7 @@ import { update } from './sim/update';
 import { el } from './ui/dom';
 import { refreshBest } from './ui/hud';
 import { bindInput } from './ui/input';
+import { bindOnline } from './ui/online';
 import { bindViewport, resizeViewport } from './ui/viewport';
 
 function boot(): void {
@@ -39,6 +40,7 @@ function boot(): void {
   // 4. First frame.
   resizeViewport();
   syncModeUI();
+  bindOnline();
   el.loading.classList.add('hidden');
   drawMinimap();
   render();

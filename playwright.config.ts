@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4318;
+const publicPeer = !!process.env.E_ZERO_PUBLIC_PEER;
+const remoteUrl = process.env.E_ZERO_BASE_URL;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -11,7 +13,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   timeout: 60_000,
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: remoteUrl || `http://localhost:${PORT}`,
     trace: 'on-first-retry',
   },
   projects: [
@@ -25,15 +27,33 @@ export default defineConfig({
             '--autoplay-policy=no-user-gesture-required',
             '--mute-audio',
             '--disable-lcd-text',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows',
           ],
         },
       },
     },
   ],
-  webServer: {
-    command: 'pnpm build && pnpm preview',
-    url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  webServer: remoteUrl
+    ? undefined
+    : [
+        {
+          command: 'pnpm build && pnpm preview',
+          url: `http://localhost:${PORT}`,
+          reuseExistingServer: false,
+          env: { VITE_PEER_SERVER: publicPeer ? '' : 'http://127.0.0.1:5320' },
+          timeout: 180_000,
+        },
+        ...(publicPeer
+          ? []
+          : [
+              {
+                command: 'pnpm exec peerjs --host 127.0.0.1 --port 5320',
+                url: 'http://127.0.0.1:5320',
+                reuseExistingServer: false,
+                timeout: 30_000,
+              },
+            ]),
+      ],
 });

@@ -17,6 +17,7 @@ import { announce } from '../ui/announce';
 import { boostTouchButton, el } from '../ui/dom';
 import { hideMessage, refreshBest, showMessage, updateHUD } from '../ui/hud';
 import { clearTouch } from '../ui/touch';
+import { fieldSize, online, onlineActions, onlinePosition } from '../online/state';
 
 /** Countdown duration, chosen so "03" is readable before it ticks. */
 const COUNTDOWN = 2.6;
@@ -40,7 +41,8 @@ export function syncModeUI(): void {
   el.finishDock.classList.toggle('hidden', game.mode !== 'victory');
   el.cinemaTag.classList.toggle('hidden', game.mode !== 'victory');
   el.freeControls.classList.toggle('hidden', game.mode !== 'free');
-  el.pauseButton.style.display = PAUSABLE_MODES.includes(game.mode) ? 'block' : 'none';
+  el.pauseButton.style.display =
+    !online.racing && PAUSABLE_MODES.includes(game.mode) ? 'block' : 'none';
 }
 
 export function resetPlayer(): void {
@@ -76,6 +78,20 @@ export function resetPlayer(): void {
 }
 
 export function startRace(): void {
+  if (online.active) return;
+  beginRace();
+}
+
+export function startOnlineRace(delay: number): void {
+  beginRace();
+  game.countTime = delay;
+  player.x = online.racers.find((r) => r.id === online.id)?.x ?? 0;
+  game.displayPosition = onlinePosition();
+  el.driveHint.textContent = 'ONLINE · 3 LAPS · NON-CONTACT RACING';
+  updateHUD();
+}
+
+function beginRace(): void {
   sound.init();
   resetPlayer();
   game.mode = 'countdown';
@@ -99,11 +115,22 @@ export function startRace(): void {
   sound.setVolume();
   updateHUD();
   announce(
-    'Three-lap race. You start in position 100 of 100. Steer with the arrow keys. Hold Space to boost.',
+    online.racing
+      ? 'Online three-lap race. Steer with the arrow keys. Hold Space to boost.'
+      : 'Three-lap race. You start in position 100 of 100. Steer with the arrow keys. Hold Space to boost.',
   );
 }
 
 export function returnToTitle(): void {
+  if (online.active) {
+    onlineActions.leave();
+    return;
+  }
+  showTitle();
+}
+
+/** The room survives between online rounds. */
+export function showTitle(): void {
   clearBoostFX();
   game.demoS = player.s || total * 0.085;
   game.mode = 'title';
@@ -129,6 +156,7 @@ export function returnToTitle(): void {
 
 /** Toggles pause. Safe to call in any mode. */
 export function pauseRace(): void {
+  if (online.active) return;
   if (PAUSABLE_MODES.includes(game.mode)) {
     game.pausedMode = game.mode;
     game.mode = 'paused';
@@ -149,6 +177,7 @@ export function pauseRace(): void {
 
 /** Takes back manual control after finishing. */
 export function continueDriving(): void {
+  if (online.active) return;
   if (game.mode !== 'victory') return;
   game.mode = 'free';
   player.boosting = false;
@@ -204,6 +233,24 @@ export function finishRace(failed = false): void {
     laps: game.lapTimes.slice(),
     positionsGained: FIELD_SIZE - position,
   };
+
+  if (online.racing) {
+    game.lapResult.position = onlinePosition();
+    game.lapResult.fieldSize = fieldSize();
+    game.lapResult.positionsGained = 0;
+    game.mode = 'results';
+    held.clear();
+    clearTouch();
+    el.countdown.classList.remove('show');
+    syncModeUI();
+    updateHUD();
+    announce(
+      failed
+        ? 'Power out. Waiting for the other racers.'
+        : 'Race complete. Waiting for the other racers.',
+    );
+    return;
+  }
 
   if (!failed && (!game.best || game.raceTime < game.best)) {
     setBest(game.raceTime);

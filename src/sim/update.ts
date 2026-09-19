@@ -15,6 +15,7 @@ import { hideMessage, showMessage, updateHUD } from '../ui/hud';
 import { updateBoostFX } from './boost';
 import { updateAutoPilot, updateRace } from './physics';
 import { game, player, sparkParticles } from './state';
+import { fieldSize, updateRemoteCraft } from '../online/state';
 
 /** HUD refresh interval. 25 Hz is smooth enough for numbers. */
 const HUD_INTERVAL = 0.04;
@@ -24,6 +25,7 @@ const ORBIT_TIME = reducedMotion ? 12 : 7.2;
 const SPARK_GRAVITY = 340;
 
 export function update(dt: number): void {
+  updateRemoteCraft(dt);
   // Paused still ticks audio so the engine fades out rather than cutting.
   if (game.mode === 'paused') {
     sound.update();
@@ -49,7 +51,7 @@ export function update(dt: number): void {
     game.demoS += BASE * 0.9 * dt;
   } else if (game.mode === 'countdown') {
     game.countTime -= dt;
-    const num = Math.ceil(game.countTime);
+    const num = Math.min(3, Math.ceil(game.countTime));
     if (num !== game.lastCount && num > 0) {
       game.lastCount = num;
       el.countdown.textContent = String(num).padStart(2, '0');
@@ -59,7 +61,7 @@ export function update(dt: number): void {
       game.mode = 'race';
       el.countdown.textContent = 'GO';
       sound.tone(880, 0.28, 0.18, 'square');
-      showMessage('100 RACERS · 3 LAPS', 1.5);
+      showMessage(fieldSize() + ' RACERS · 3 LAPS', 1.5);
       syncModeUI();
     }
   } else if (game.mode === 'race') {

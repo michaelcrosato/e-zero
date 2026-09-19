@@ -85,6 +85,8 @@ function onKeyDown(e: KeyboardEvent): void {
 
   // A focused button keeps its normal Enter action.
   const active = document.activeElement as HTMLElement | null;
+  if (active?.matches('input, textarea, select, [contenteditable="true"]')) return;
+  if (!el.onlineOverlay.classList.contains('hidden')) return;
   if (
     e.code === 'Enter' &&
     active?.tagName === 'BUTTON' &&

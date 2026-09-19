@@ -13,6 +13,7 @@ import { N, sample, total, track } from '../track/spline';
 import { el } from '../ui/dom';
 import { shipPalettes } from './palettes';
 import { polygon } from './sprites';
+import { online, remoteCraft } from '../online/state';
 
 const MAP_W = 264;
 const MAP_H = 208;
@@ -74,7 +75,7 @@ export function drawMinimap(): void {
   c.fillStyle = '#e8effc';
   c.fillRect(toX(start.x) - 5, toY(start.y) - 2, 10, 3);
 
-  for (const r of rivals) {
+  for (const r of online.racing ? remoteCraft : rivals) {
     const p = sample(r.s, r.x);
     c.beginPath();
     c.arc(toX(p.x), toY(p.y), 2.3, 0, TAU);

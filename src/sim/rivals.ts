@@ -13,6 +13,7 @@ import { total } from '../track/spline';
 import { shipPalettes } from '../render/palettes';
 import { game, player } from './state';
 import type { Rival } from './types';
+import { online, onlinePosition } from '../online/state';
 
 /** Starting grid: three staggered columns leave gaps to pass through. */
 const COLUMN_LANES = [-0.7, 0, 0.7];
@@ -73,6 +74,7 @@ export function resetRivals(): void {
 
 /** Race position, counting rivals that have already finished as ahead. */
 export function livePosition(): number {
+  if (online.racing) return onlinePosition();
   return 1 + rivals.reduce((n, r) => n + (r.finishedAt !== null || r.s > player.s ? 1 : 0), 0);
 }
 
@@ -160,6 +162,7 @@ export function planTraffic(): void {
 const PLAN_INTERVAL = 0.12;
 
 export function updateRivals(dt: number): void {
+  if (online.racing) return;
   game.fieldTime += dt;
   game.trafficClock -= dt;
   if (game.trafficClock <= 0) {

@@ -14,6 +14,7 @@ main.ts                     boot sequence, wiring, loop start
   │
   ├── ui/                   DOM: hud, input, viewport, dom handles, announce
   ├── audio/                Web Audio graph and music routing
+  ├── online/               validated room protocol, host lifecycle, lazy WebRTC session
   │
   ├── sim/                  physics, rivals, boost, scenery, state
   ├── render/               ground, sky, craft, props, effects, minimap, sprites
@@ -87,6 +88,12 @@ from `planTraffic`, which runs at 8 Hz (not 120 Hz), sorts the field by lap
 distance, and scores candidate lanes against a window of neighbours.
 
 ## Invariants
+
+Online state is a DOM-free exported object. The transport lives outside the
+simulation and publishes validated snapshots; physics still reads only `dt`.
+Online races use human craft in place of the AI field. Solo follows the original
+code paths, preserving the exact world and physics parity tests. See
+[`MULTIPLAYER.md`](MULTIPLAYER.md) for authority, timing and lifecycle details.
 
 These hold across the codebase. Breaking one is a bug even if nothing throws:
 

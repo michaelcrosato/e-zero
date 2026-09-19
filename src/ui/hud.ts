@@ -4,7 +4,8 @@
  * Driven at 25 Hz from the simulation rather than per frame, because every
  * update here touches the DOM and none of it needs 120 Hz resolution.
  */
-import { BOOST_RATIO, FIELD_SIZE, RACE_LAPS } from '../config/constants';
+import { BOOST_RATIO, RACE_LAPS } from '../config/constants';
+import { fieldSize, online, onlinePosition } from '../online/state';
 import { clamp, mod } from '../core/math';
 import { formatTime } from '../core/time';
 import { drawMinimap } from '../render/minimap';
@@ -30,6 +31,8 @@ export function hideMessage(): void {
 }
 
 export function updateHUD(): void {
+  const count = fieldSize();
+  if (online.racing && game.lapResult) game.lapResult.position = onlinePosition();
   const free = game.mode === 'free' || (game.mode === 'paused' && game.pausedMode === 'free');
   const post = !!game.lapResult && !game.lapResult.failed;
 
@@ -40,13 +43,14 @@ export function updateHUD(): void {
     : Math.min(RACE_LAPS, Math.floor(player.s / total) + 1);
 
   el.positionValue.textContent = String(position).padStart(3, '0');
+  el.fieldSize.textContent = '/ ' + count;
   el.fieldStatus.textContent = free
     ? 'FREE DRIVE'
     : position === 1
       ? 'RACE LEADER'
-      : position === FIELD_SIZE
+      : position === count
         ? 'START / LAST PLACE'
-        : '+' + (FIELD_SIZE - position) + ' POSITIONS';
+        : '+' + (count - position) + ' POSITIONS';
 
   el.powerValue.textContent = Math.ceil(player.power) + '%';
   el.powerFill.style.width = player.power + '%';

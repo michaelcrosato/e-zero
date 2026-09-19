@@ -6,7 +6,8 @@
  * and give the craft its weight. Rail contact applies a `kickV` that steering
  * deliberately cannot cancel, so a bounce always costs you the line.
  */
-import { FIELD_SIZE, KMH, RACE_LAPS } from '../config/constants';
+import { KMH, RACE_LAPS } from '../config/constants';
+import { fieldSize, online } from '../online/state';
 import { reducedMotion } from '../core/env';
 import { clamp, lerp, mod } from '../core/math';
 import { formatTime } from '../core/time';
@@ -93,7 +94,7 @@ function updateRaceLaps(oldS: number, dt: number): void {
           ' Position ' +
           game.displayPosition +
           ' of ' +
-          FIELD_SIZE +
+          fieldSize() +
           '.',
       );
       sound.tone(next === RACE_LAPS ? 880 : 740, 0.18, 0.12, 'square');
@@ -188,6 +189,7 @@ export function updateRace(dt: number, free = false): void {
   updateRivals(dt);
 
   for (const r of rivals) {
+    if (online.racing) break;
     const ds = mod(r.s - player.s + total / 2, total) - total / 2;
     if (Math.abs(ds) < 34 && Math.abs(player.x - r.x) < 30 && player.impact === 0) {
       const side = player.x < r.x ? -1 : 1;

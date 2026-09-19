@@ -6,7 +6,7 @@
  * game through this. It reads live state and never mutates anything, so it
  * cannot change how the game plays.
  */
-import { BOOST_RATIO, COURSE_SCALE, FIELD_SIZE, KMH, RACE_LAPS, TAU } from './config/constants';
+import { BOOST_RATIO, COURSE_SCALE, KMH, RACE_LAPS, TAU } from './config/constants';
 import { reducedMotion } from './core/env';
 import type { LoopHandle } from './core/loop';
 import { clamp, mod } from './core/math';
@@ -17,6 +17,7 @@ import { boostFX, game, player } from './sim/state';
 import { BASE, MAX, RACE_DISTANCE, widthAt } from './track/layout';
 import { sample, total } from './track/spline';
 import { viewport } from './ui/viewport';
+import { fieldSize, online, remoteCraft } from './online/state';
 
 function createApi(loop: LoopHandle) {
   return Object.freeze({
@@ -30,8 +31,8 @@ function createApi(loop: LoopHandle) {
         freeLapTime: game.freeLapTime,
         progress: player.s / total,
         raceProgress: clamp(player.s / RACE_DISTANCE, 0, 1),
-        fieldSize: FIELD_SIZE,
-        rivalCount: rivals.length,
+        fieldSize: fieldSize(),
+        rivalCount: online.racing ? remoteCraft.length : rivals.length,
         totalLaps: RACE_LAPS,
         lapTimes: game.lapTimes.slice(),
         lapTime: Math.max(0, game.raceTime - game.lapStartTime),
@@ -111,6 +112,20 @@ function createApi(loop: LoopHandle) {
         contextState: sound.context?.state || 'unavailable',
         musicGain: sound.musicGainValue,
         error: sound.musicError,
+      };
+    },
+
+    get online() {
+      return {
+        active: online.active,
+        racing: online.racing,
+        phase: online.phase,
+        code: online.code,
+        id: online.id,
+        host: online.host,
+        round: online.round,
+        racers: online.racers.map((r) => ({ ...r })),
+        craft: remoteCraft.map((r) => ({ ...r })),
       };
     },
 

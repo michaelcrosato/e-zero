@@ -21,11 +21,8 @@ test('starts in nine lanes and drives all twelve section-specific widths over a 
   expect(start.field.some((r) => r.x < -250)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('nine-lane-grid.png') });
   await page.waitForFunction(() => window.EZero.state === 'race');
-  await page.keyboard.down('ArrowRight');
-  await page.waitForFunction(() => window.EZero.stats.lateral > 215);
-  await page.keyboard.up('ArrowRight');
+  expect(await driveCentreLine(page, 215)).toBeGreaterThan(215);
   expect(await page.evaluate(() => window.EZero.stats.railHits)).toBe(0);
-  await driveCentreLine(page);
   for (const part of start.sections) {
     const at = part.start + (part.end - part.start) * (part.index <= 6 ? 0.97 : 0.6);
     await page.waitForFunction(

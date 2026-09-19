@@ -9,8 +9,8 @@ import { TAU } from '../config/constants';
 import { mod } from '../core/math';
 import { rivals } from '../sim/rivals';
 import { player } from '../sim/state';
-import { total, track } from '../track/spline';
-import { course, sampleCourse as sample } from '../track/course';
+import { track } from '../track/spline';
+import { course, sampleCourse as sample, courseLength } from '../track/course';
 import { skyline } from '../track/spatial';
 import { el } from '../ui/dom';
 import { shipPalettes } from './palettes';
@@ -37,6 +37,7 @@ const classicBounds = boundsFor(track);
 const spatialBounds = boundsFor(skyline.frames);
 
 export function drawMinimap(): void {
+  const total = courseLength();
   const points = course.id === 'skyline' ? skyline.frames : track;
   const N = points.length;
   const bounds = course.id === 'skyline' ? spatialBounds : classicBounds;

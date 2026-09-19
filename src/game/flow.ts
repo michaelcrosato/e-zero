@@ -12,7 +12,7 @@ import { resetBoostFX } from '../sim/boost';
 import { livePosition, resetRivals, rivals } from '../sim/rivals';
 import { createPlayer, game, held, player, setBest, sparkParticles } from '../sim/state';
 import { PAUSABLE_MODES } from '../sim/types';
-import { total } from '../track/spline';
+import { courseLength } from '../track/course';
 import { announce } from '../ui/announce';
 import { boostTouchButton, el } from '../ui/dom';
 import { hideMessage, refreshBest, showMessage, updateHUD } from '../ui/hud';
@@ -132,7 +132,7 @@ export function returnToTitle(): void {
 /** The room survives between online rounds. */
 export function showTitle(): void {
   clearBoostFX();
-  game.demoS = player.s || total * 0.085;
+  game.demoS = player.s || courseLength() * 0.085;
   game.mode = 'title';
   held.clear();
   clearTouch();

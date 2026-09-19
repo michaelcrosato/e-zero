@@ -1,7 +1,7 @@
 /** Small, versioned messages; never trust objects received from another browser. */
 import { isCourse, type CourseId } from '../track/course';
 import { HALF } from '../config/constants';
-export const PROTOCOL = 3;
+export const PROTOCOL = 4;
 export const MAX_PLAYERS = 4;
 export const ROOM_PATTERN = /^[A-Z2-9]{8}$/;
 
@@ -134,7 +134,7 @@ export function newRacer(
     ready: slot === 0,
     connected: true,
     s: 0,
-    x: (slot - 1.5) * (course === 'skyline' ? (HALF * 2) / 3 : 42),
+    x: (slot - 1.5) * (course === 'skyline' ? (HALF * 4) / 3 : 42),
     v: 0,
     boosting: false,
     finishedAt: null,

@@ -14,14 +14,15 @@ import { sound } from './audio/sound';
 import { surface } from './render/surface';
 import { rivals } from './sim/rivals';
 import { boostFX, game, player } from './sim/state';
-import { BASE, MAX, RACE_DISTANCE } from './track/layout';
-import { total } from './track/spline';
+import { BASE, MAX } from './track/layout';
 import {
   course,
   sampleCourse as sample,
   lateralDrift,
   gradeAcceleration,
   courseWidthAt as widthAt,
+  courseLength,
+  raceDistance,
 } from './track/course';
 import { skylineLaneCountAt, MERGE_START, MERGE_END } from './track/launch';
 import { sectionAt, skyline } from './track/spatial';
@@ -36,6 +37,8 @@ function createApi(loop: LoopHandle) {
     },
 
     get stats() {
+      const total = courseLength();
+      const RACE_DISTANCE = raceDistance();
       const frame = sample(player.s, player.x);
       return {
         course: course.id,
@@ -47,6 +50,7 @@ function createApi(loop: LoopHandle) {
         lateralDrift: lateralDrift(frame, player.v),
         gradeAcceleration: course.id === 'skyline' ? gradeAcceleration(frame) : 0,
         section: course.id === 'skyline' ? sectionAt(player.s).name : 'Neon Harbor',
+        sectionIndex: course.id === 'skyline' ? sectionAt(player.s).index : 1,
         time: game.raceTime,
         freeLapTime: game.freeLapTime,
         progress: player.s / total,

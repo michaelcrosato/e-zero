@@ -1,15 +1,19 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { FIXED_STEP, HALF } from '../../src/config/constants';
-import { course, courseWidthAt } from '../../src/track/course';
+import { course, courseLength, courseWidthAt, raceDistance } from '../../src/track/course';
 import {
+  GRID_COLUMNS,
   MERGE_START,
   MERGE_END,
   skylineDividerAt,
   skylineGrid,
   skylineLaneCountAt,
+  skylineLaneUnitsAt,
   skylineWidthAt,
 } from '../../src/track/launch';
-import { total } from '../../src/track/spline';
+import { skyline, sectionAt } from '../../src/track/spatial';
+import { total as classicLength } from '../../src/track/spline';
+import { BASE } from '../../src/track/layout';
 import { resetRivals, rivals, updateRivals } from '../../src/sim/rivals';
 import { game, player } from '../../src/sim/state';
 
@@ -18,43 +22,71 @@ afterEach(() => {
   resetRivals();
 });
 
-describe('six-lane launch', () => {
-  it('doubles the entire starting apron then progressively drops to five, four and three lanes', () => {
+describe('nine-lane twelve-section circuit', () => {
+  it('doubles physical lap length without changing speed and gives every section real distance', () => {
+    course.id = 'skyline';
+    expect(courseLength()).toBe(classicLength * 2);
+    expect(raceDistance()).toBe(skyline.length * 3);
+    expect(BASE).toBe(classicLength / 29.7);
+    expect(skyline.sections).toHaveLength(12);
+    expect(new Set(skyline.sections.map((s) => s.name)).size).toBe(12);
+    for (const s of skyline.sections) expect(s.end - s.start).toBeGreaterThan(1500);
+    expect(MERGE_END / BASE).toBeGreaterThan(25);
+  });
+
+  it('holds nine lanes for the whole grid and removes exactly one lane in each of sections 1–6', () => {
     for (let s = 0; s <= MERGE_START; s += 20) {
-      expect(skylineWidthAt(s)).toBe(HALF * 2);
-      expect(skylineLaneCountAt(s)).toBe(6);
+      expect(skylineWidthAt(s)).toBe(HALF * 3);
+      expect(skylineLaneCountAt(s)).toBe(9);
     }
-    let previous = HALF * 2;
-    for (let s = MERGE_START; s <= MERGE_END; s += 10) {
-      expect(skylineWidthAt(s)).toBeLessThanOrEqual(previous);
-      previous = skylineWidthAt(s);
+    let previous = 9;
+    for (let s = 0; s < MERGE_END; s += 10) {
+      expect(skylineLaneUnitsAt(s)).toBeLessThanOrEqual(previous);
+      previous = skylineLaneUnitsAt(s);
     }
-    for (let stage = 1; stage <= 3; stage++) {
-      const s = MERGE_START + ((MERGE_END - MERGE_START) * stage) / 3 + 0.001;
-      expect(skylineLaneCountAt(s)).toBe(6 - stage);
-      expect(skylineWidthAt(s)).toBeCloseTo((HALF * (6 - stage)) / 3, 5);
+    for (const part of skyline.sections.slice(0, 6)) {
+      const start = Math.max(0, part.start + 0.01);
+      expect(skylineLaneCountAt(start)).toBe(10 - part.index);
+      expect(skylineLaneCountAt(part.end - 0.01)).toBe(9 - part.index);
       expect(
-        Array.from({ length: 5 }, (_, i) => skylineDividerAt(s, i)).filter((x) => x !== null),
-      ).toHaveLength(5 - stage);
+        Array.from({ length: 8 }, (_, i) => skylineDividerAt(part.end - 0.01, i)).filter(
+          (line) => line.opacity > 0,
+        ),
+      ).toHaveLength(8 - part.index);
     }
   });
 
-  it('wraps at every lap without a discontinuity or an abrupt narrowing edge', () => {
-    for (let s = -total; s <= total * 2; s += 23) {
-      expect(skylineWidthAt(s)).toBeCloseTo(skylineWidthAt(s + total * 3), 8);
+  it('uses three to six lanes for all of the last six sections with room for difficult features', () => {
+    const last = skyline.sections.slice(6);
+    expect(last.map((s) => s.lanes)).toEqual([6, 4, 5, 4, 3, 6]);
+    for (const part of last) {
+      for (let s = part.start; s < part.end; s += 7) {
+        expect(skylineLaneUnitsAt(s)).toBeGreaterThanOrEqual(3);
+        expect(skylineLaneUnitsAt(s)).toBeLessThanOrEqual(6);
+      }
+      expect(skylineLaneCountAt((part.start + part.end) / 2)).toBe(part.lanes);
+    }
+    expect(sectionAt(skyline.length - 1).index).toBe(1);
+  });
+
+  it('wraps and crosses section boundaries without abrupt changes in width or lane markings', () => {
+    for (let s = -skyline.length; s < skyline.length * 2; s += 23) {
+      expect(skylineWidthAt(s)).toBeCloseTo(skylineWidthAt(s + skyline.length * 3), 8);
       expect(Math.abs(skylineWidthAt(s + 1) - skylineWidthAt(s))).toBeLessThan(0.15);
-      for (let divider = 0; divider < 5; divider++) {
-        const x = skylineDividerAt(s, divider);
-        if (x !== null) expect(Math.abs(x)).toBeLessThan(skylineWidthAt(s));
+      for (let divider = 0; divider < 8; divider++) {
+        const line = skylineDividerAt(s, divider);
+        if (line.opacity > 0) expect(Math.abs(line.x)).toBeLessThan(skylineWidthAt(s));
       }
     }
-    expect(skylineWidthAt(-0.01)).toBe(skylineWidthAt(0.01));
+    for (const part of skyline.sections)
+      expect(skylineWidthAt(part.end - 0.001)).toBeCloseTo(skylineWidthAt(part.end + 0.001), 5);
+    expect(skylineWidthAt(-0.01)).toBeCloseTo(skylineWidthAt(0.01), 6);
   });
 
-  it('uses six separated columns, twice the row spacing and fits the whole field before the taper', () => {
+  it('uses nine separated columns with generous row spacing before the first merge', () => {
     const grid = Array.from({ length: 99 }, (_, i) => skylineGrid(i));
-    expect(new Set(grid.map((r) => r.x)).size).toBe(6);
-    expect(grid[6].s - grid[0].s).toBe(158);
+    expect(new Set(grid.map((r) => r.x)).size).toBe(GRID_COLUMNS);
+    expect(grid[9].s - grid[0].s).toBe(237);
     expect(Math.max(...grid.map((r) => r.s))).toBeLessThan(MERGE_START);
     for (let i = 0; i < grid.length; i++) {
       expect(Math.abs(grid[i].x) + 24).toBeLessThan(skylineWidthAt(grid[i].s));
@@ -64,19 +96,21 @@ describe('six-lane launch', () => {
     }
   });
 
-  it('rebuilds the grid on course changes and restores Classic exactly', () => {
+  it('restores Classic length, grid and width after switching courses', () => {
     const classic = rivals.map((r) => ({ s: r.s, x: r.x, lane: r.lane }));
     course.id = 'skyline';
     resetRivals();
-    expect(new Set(rivals.map((r) => r.x)).size).toBe(6);
-    expect(courseWidthAt(0)).toBe(196);
+    expect(new Set(rivals.map((r) => r.x)).size).toBe(9);
+    expect(courseWidthAt(0)).toBe(294);
     course.id = 'classic';
     resetRivals();
     expect(rivals.map((r) => ({ s: r.s, x: r.x, lane: r.lane }))).toEqual(classic);
     expect(courseWidthAt(0)).toBe(98);
+    expect(courseLength()).toBe(classicLength);
+    expect(raceDistance()).toBe(classicLength * 3);
   });
 
-  it('drives all 99 rivals through the merges inside the rails without lateral jumps', () => {
+  it('drives all 99 rivals around the longer circuit inside the rails without lateral jumps', () => {
     course.id = 'skyline';
     resetRivals();
     game.fieldTime = 0;
@@ -86,16 +120,17 @@ describe('six-lane launch', () => {
     player.v = 0;
     let maxStep = 0;
     let minClearance = Infinity;
-    for (let tick = 0; tick < 16 / FIXED_STEP; tick++) {
+    for (let tick = 0; tick < 75 / FIXED_STEP; tick++) {
       const positions = rivals.map((r) => r.x);
       updateRivals(FIXED_STEP);
       rivals.forEach((r, i) => {
         maxStep = Math.max(maxStep, Math.abs(r.x - positions[i]));
         minClearance = Math.min(minClearance, skylineWidthAt(r.s) - Math.abs(r.x));
+        if (r.s < raceDistance()) expect(r.finishedAt).toBeNull();
       });
     }
-    expect(rivals.every((r) => r.s > MERGE_END)).toBe(true);
+    expect(rivals.every((r) => r.s > skyline.length)).toBe(true);
     expect(minClearance).toBeGreaterThan(22);
     expect(maxStep).toBeLessThanOrEqual(60 * FIXED_STEP + 1e-8);
-  });
+  }, 30_000);
 });

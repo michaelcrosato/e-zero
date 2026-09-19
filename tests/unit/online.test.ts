@@ -26,7 +26,7 @@ describe('private online rooms', () => {
       room.ready(`p${i}`, true);
     }
     const grid = room.racers.map((r) => r.x);
-    expect(grid[3] - grid[0]).toBe(196);
+    expect(grid[3] - grid[0]).toBe(392);
     expect(room.start()).toBe(true);
     expect(room.racers.map((r) => r.x)).toEqual(grid);
     for (const racer of room.racers) room.motion(racer.id, 1, { ...motion(1), finishedAt: 90 });

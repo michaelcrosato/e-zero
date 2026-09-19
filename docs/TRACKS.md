@@ -6,27 +6,50 @@ a helical corkscrew with a full roll, and a valley dip. Race against the 99 AI
 craft or create a 2–4-player room. Guests automatically load the host's course.
 **Neon Harbor · Classic** preserves the original flat track and physics.
 
-## Six-lane start and progressive merges
+## Nine-lane start and twelve sections
 
-Skyline starts at twice the normal road width: six lanes across a 392-unit apron.
-All 99 rivals fit in six staggered columns before the taper begins, with 158 units
-between rows (twice Classic's spacing). The first 11% of the circuit holds that
-width; three successive, smooth merges reduce it to five, four, then three lanes
-by 25% of the lap. The left pair merges first, then the right pair, then the centre.
-The extra divider stripes converge into the rails or a surviving divider.
+Skyline is now 56,032 world units per lap: twice its previous length, with the same
+cruising and boost speeds. The nine-lane launch apron is 588 units wide. All 99
+rivals occupy nine staggered columns with 237 units between rows. The entire grid
+fits before the first taper begins at 2,900 units.
 
-`track/launch.ts` owns this shared width and lane profile. The road mesh, rail
+One lane merges away in each of the first six sections. Adjacent groups pair up
+across alternating parts of the road; lane markings and AI paths interpolate
+smoothly. The sixth reduction finishes near the halfway point, about 30 seconds
+into an unboosted lap, instead of the old roughly eight-second compression.
+
+| Section | Feature         | Lanes | Reason                                       |
+| ------- | --------------- | ----- | -------------------------------------------- |
+| 1       | Launch straight | 9 → 8 | Space for the entire starting field          |
+| 2       | Summit climb    | 8 → 7 | Long, gradual merge on the climb and descent |
+| 3       | Sky bridge      | 7 → 6 | Clear sight line for the next merge          |
+| 4       | High bank       | 6 → 5 | Generous room through the bank               |
+| 5       | Vertical loop   | 5 → 4 | Spread the merge over the full inversion     |
+| 6       | Carousel        | 4 → 3 | Complete the opening reductions              |
+| 7       | Corkscrew       | 3 → 6 | Widen before the roll's apex                 |
+| 8       | Ridge run       | 6 → 4 | Narrow gradually on the smoother ridge       |
+| 9       | Sweeper         | 4 → 5 | Extra passing room in the bend               |
+| 10      | Valley descent  | 5 → 4 | Moderate width through the dip               |
+| 11      | Harbor straight | 4 → 3 | Narrow technical straight                    |
+| 12      | Home bend       | 3 → 6 | More room through the final bank             |
+
+All of sections 7–12 remain between three and six lanes, including transitions.
+The start/finish line sits about 2,200 units into section 1. Its approach reopens
+from six to nine lanes within section 1, then holds nine across the line and grid;
+section 12 never exceeds six lanes. The section-1 start distance is therefore
+negative, and its approach also occupies the end of the wrapped lap. There are
+still exactly twelve sections and no width jump at the lap seam.
+
+`track/launch.ts` owns the shared width and lane profile. The road mesh, rail
 collisions, AI lane preferences and diagnostics use it consistently. AI anticipates
-the narrower road and merging traffic before moving inward, with no lateral snaps.
-The road reopens before the finish to join the launch apron smoothly on every lap;
-it is a physical section, not a timed change beneath moving craft. Online racers
-also start farther apart, and restarts/rematches restore the appropriate grid.
-Skyline best times use a new storage version for the changed race layout.
+narrower road and merging traffic before moving inward, with no lateral snaps.
+Online racers also start farther apart, and restarts/rematches restore the grid.
+Skyline best times use a new storage version for the changed length and layout.
 
 ## Track representation
 
 `src/track/spatial.ts` defines `SKYLINE_DESIGN` as local-space primitives. A segment
-has a name, kind and length, with additional parameters:
+has a name, kind, length and target lane count, with additional parameters:
 
 | Kind        | Parameters                 | Behaviour                                                                                                                                                             |
 | ----------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,8 +61,8 @@ has a name, kind and length, with additional parameters:
 
 Design dimensions are authoring units. `buildSpatial` measures the resulting 3D
 curve, scales it uniformly to the chosen lap length, and resamples by arc length.
-Skyline uses the same lap length as Classic to retain the game's familiar speed
-scale and approximate race duration. The world positions really change in all
+Skyline uses twice the lap length of Classic without scaling vehicle speed.
+The world positions really change in all
 three dimensions; distance is never measured from the flattened minimap.
 
 The final segment must meet the start position and heading smoothly. The builder
@@ -81,7 +104,7 @@ during a race or through the room UI after creation.
 
 - Unit tests check wrapping, true 3D distance, orthonormal frames, seam continuity,
   inversions, banking, separated road sections, and grade/sideways force directions.
-  Launch checks cover six-column spacing, each lane drop, the lap seam, and all 99
+  Launch checks cover nine-column spacing, every section width, the lap seam, and all 99
   AI craft driving through the taper with rail clearance and bounded steering.
 - Browser tests drive three complete laps through normal keyboard input, record
   elevation and inversion telemetry, capture each major feature, then exercise the
@@ -89,8 +112,8 @@ during a race or through the room UI after creation.
 - Browser tests also exercise WebGL loss/restoration and the unavailable-WebGL
   fallback. The four-player WebRTC race uses Skyline; one guest starts on Classic
   to verify host course synchronization.
-- A launch browser test steers beyond the former road edge, drives all three lane
-  reductions, checks the field stays inside the rails, and restarts the grid.
+- A launch browser test steers beyond the former road edge, drives all twelve section
+  widths over a complete longer lap, checks rail clearance and lap accounting, and restarts the grid.
 - The original parity suite explicitly selects `?course=classic`. This is an
   intentional new default course, not a change to the Classic comparison: every
   original numeric assertion and tolerance is retained. The reference HTML and

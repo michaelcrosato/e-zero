@@ -1,9 +1,8 @@
 import { offset, vec, type Frame3, type Vec3 } from '../core/vector';
 import { mod } from '../core/math';
-import { pads, repair } from '../track/layout';
-import { skylineWidthAt as widthAt, skylineDividerAt } from '../track/launch';
+import { skylinePads as pads, skylineRepair as repair } from '../track/course';
+import { skylineWidthAt as widthAt, skylineDividerAt, GRID_COLUMNS } from '../track/launch';
 import { sampleSpatial, skyline } from '../track/spatial';
-import { total } from '../track/spline';
 
 type Color = readonly [number, number, number];
 export class Mesh {
@@ -65,6 +64,7 @@ function ribbon(
 
 /** Static depth-tested ribbon. Markings, walls and supports share the same 3D frame. */
 export function roadMesh(): Float32Array {
+  const total = skyline.length;
   const mesh = new Mesh();
   const count = Math.ceil(total / 22);
   for (let i = 0; i < count; i++) {
@@ -100,11 +100,21 @@ export function roadMesh(): Float32Array {
       );
     }
     if (Math.floor(s / 95) % 2 === 0) {
-      for (let divider = 0; divider < 5; divider++) {
-        const x = skylineDividerAt(s, divider);
-        const nx = skylineDividerAt(next, divider);
-        if (x === null || nx === null) continue;
-        ribbon(mesh, a, b, x - 1.5, x + 1.5, nx - 1.5, nx + 1.5, 0.6, [0.55, 0.7, 0.76]);
+      for (let divider = 0; divider < GRID_COLUMNS - 1; divider++) {
+        const line = skylineDividerAt(s, divider);
+        const nextLine = skylineDividerAt(next, divider);
+        if (line.opacity === 0 && nextLine.opacity === 0) continue;
+        ribbon(
+          mesh,
+          a,
+          b,
+          line.x - 1.5 * line.opacity,
+          line.x + 1.5 * line.opacity,
+          nextLine.x - 1.5 * nextLine.opacity,
+          nextLine.x + 1.5 * nextLine.opacity,
+          0.6,
+          [0.55, 0.7, 0.76],
+        );
       }
     }
     for (const pad of pads) {

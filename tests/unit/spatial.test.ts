@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cross, dot, length, sub } from '../../src/core/vector';
 import { course, gradeAcceleration, lateralDrift, sampleCourse } from '../../src/track/course';
 import { sampleSpatial, sectionAt, skyline } from '../../src/track/spatial';
-import { sample, total } from '../../src/track/spline';
+import { sample, total as classicLength } from '../../src/track/spline';
+import { skylineWidthAt } from '../../src/track/launch';
+
+const total = skyline.length;
 
 afterEach(() => {
   course.id = 'classic';
@@ -40,7 +43,9 @@ describe('3D course geometry', () => {
       const b = sampleSpatial(s + 1);
       expect(length(sub(a, b))).toBeCloseTo(1, 2);
     }
-    expect(skyline.sections[skyline.sections.length - 1].end).toBeCloseTo(total, 8);
+    expect(
+      skyline.sections[skyline.sections.length - 1].end - skyline.sections[0].start,
+    ).toBeCloseTo(total, 8);
   });
 
   it('contains hills, banks, a full vertical inversion and a full corkscrew rotation', () => {
@@ -75,13 +80,20 @@ describe('3D course geometry', () => {
   it('keeps non-neighbouring pieces of road apart in 3D', () => {
     const points = Array.from({ length: 600 }, (_, i) => sampleSpatial((i * total) / 600));
     let closest = Infinity;
+    let roadClearance = Infinity;
     for (let i = 0; i < points.length; i++)
       for (let j = i + 1; j < points.length; j++) {
         const gap = (Math.min(j - i, points.length - j + i) * total) / points.length;
         if (gap < 750) continue;
-        closest = Math.min(closest, length(sub(points[i], points[j])));
+        const distance = length(sub(points[i], points[j]));
+        closest = Math.min(closest, distance);
+        roadClearance = Math.min(
+          roadClearance,
+          distance - skylineWidthAt((i * total) / 600) - skylineWidthAt((j * total) / 600),
+        );
       }
     expect(closest).toBeGreaterThan(300);
+    expect(roadClearance).toBeGreaterThan(24);
   });
 });
 
@@ -98,7 +110,7 @@ describe('track-relative forces', () => {
   });
 
   it('preserves the exact original sampler and drift on Classic', () => {
-    for (let s = -total; s < total * 2; s += 79) {
+    for (let s = -classicLength; s < classicLength * 2; s += 79) {
       const p = sample(s, 23);
       const q = sampleCourse(s, 23);
       expect({ x: q.x, y: q.y, angle: q.angle, curve: q.curve }).toEqual(p);

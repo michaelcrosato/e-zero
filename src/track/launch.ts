@@ -1,60 +1,72 @@
-/** Skyline's physical six-lane launch apron and three staggered lane merges. */
+/** Shared road, lane markings and AI trajectories for Skyline's twelve sections. */
 import { HALF } from '../config/constants';
 import { lerp, mod, smooth } from '../core/math';
-import { widthAt } from './layout';
-import { total } from './spline';
+import { sectionAt, skyline } from './spatial';
 
-export const MERGE_START = total * 0.11;
-export const MERGE_END = total * 0.25;
-const MERGE_LENGTH = (MERGE_END - MERGE_START) / 3;
+export const GRID_COLUMNS = 9;
+export const LANE_WIDTH = (HALF * 2) / 3;
+export const MERGE_START = 2900;
+export const MERGE_END = skyline.sections[5].end;
 
-function mergeDistance(s: number): number {
-  const d = mod(s, total);
-  // Reopen before the finish so the physical road closes smoothly across every lap.
-  return d > total * 0.9 ? lerp(MERGE_END, MERGE_START, smooth((d / total - 0.9) / 0.09)) : d;
+// Adjacent groups merge alternately across the road, leaving three groups of three.
+const DROP_ORDER = [1, 8, 4, 2, 7, 5];
+const laneStates = Array.from({ length: GRID_COLUMNS + 1 }, (_, count) => {
+  const removed = new Set(DROP_ORDER.slice(0, GRID_COLUMNS - count));
+  const groups = [0];
+  for (let column = 1; column < GRID_COLUMNS; column++)
+    groups.push(groups[column - 1] + (removed.has(column) ? 0 : 1));
+  return {
+    centres: groups.map((group) => (group - (count - 1) / 2) * LANE_WIDTH),
+    dividers: Array.from({ length: GRID_COLUMNS - 1 }, (_, i) => ({
+      x: (groups[i] - (count - 1) / 2 + (removed.has(i + 1) ? 0 : 0.5)) * LANE_WIDTH,
+      visible: removed.has(i + 1) ? 0 : 1,
+    })),
+  };
+});
+
+/** Fractional lane count describes a continuous physical taper, never a width jump. */
+export function skylineLaneUnitsAt(s: number): number {
+  const part = sectionAt(s);
+  let d = mod(s, skyline.length);
+  if (part.index === 1) {
+    if (d > part.end) d -= skyline.length;
+    if (d < 0) return lerp(6, 9, smooth((d - part.start) / -part.start));
+    return lerp(9, 8, smooth((d - MERGE_START) / (part.end * 0.95 - MERGE_START)));
+  }
+  const t = (d - part.start) / (part.end - part.start);
+  // One long merge per opening section; later widths settle before each feature's apex.
+  const blend = part.index <= 6 ? smooth((t - 0.2) / 0.65) : smooth(t / 0.45);
+  return lerp(part.entryLanes, part.lanes, blend);
 }
 
-/** Left pair, right pair, then centre pair; each becomes one normal racing lane. */
-export function laneMergeAt(s: number, pair: number): number {
-  const order = pair === 1 ? 2 : pair === 2 ? 1 : 0;
-  return smooth((mergeDistance(s) - MERGE_START) / MERGE_LENGTH - order);
+export const skylineWidthAt = (s: number): number => (skylineLaneUnitsAt(s) * LANE_WIDTH) / 2;
+export const skylineLaneCountAt = (s: number): number => Math.ceil(skylineLaneUnitsAt(s) - 1e-9);
+
+/** Stable IDs let each removed divider fade as its neighbouring lanes join. */
+export function skylineDividerAt(s: number, divider: number): { x: number; opacity: number } {
+  const lanes = skylineLaneUnitsAt(s);
+  const low = Math.floor(lanes);
+  const high = Math.ceil(lanes);
+  const a = laneStates[low].dividers[divider];
+  const b = laneStates[high].dividers[divider];
+  return { x: lerp(a.x, b.x, lanes - low), opacity: lerp(a.visible, b.visible, lanes - low) };
 }
 
-export function skylineWidthAt(s: number): number {
-  const d = mergeDistance(s);
-  const merged = laneMergeAt(s, 0) + laneMergeAt(s, 1) + laneMergeAt(s, 2);
-  // Keep the launch taper monotonic, then blend back into the original three-lane flares.
-  return HALF * (2 - merged / 3) + (widthAt(s) - HALF) * smooth((d - MERGE_END) / (total * 0.04));
-}
-
-export function skylineLaneCountAt(s: number): number {
-  return 3 + [0, 1, 2].filter((pair) => laneMergeAt(s, pair) < 1).length;
-}
-
-/** Stable divider IDs keep mesh strips connected while individual lanes disappear. */
-export function skylineDividerAt(s: number, divider: number): number | null {
-  const width = skylineWidthAt(s);
-  if (divider < 2) return (divider === 0 ? -width : width) / 3;
-  const pair = divider - 2;
-  const merged = laneMergeAt(s, pair);
-  if (merged === 1) return null;
-  const from = (pair - 1) * (2 / 3);
-  const to = pair === 0 ? -1 : pair === 2 ? 1 : -1 / 3;
-  return lerp(from, to, merged) * width;
-}
-
-/** Lane preference in the AI's normalized usable-width coordinates. */
+/** Continuous lane preferences keep merged pairs together, including subsequent splits. */
 export function skylineLaneAt(s: number, column: number): number {
-  const pair = Math.floor(column / 2);
-  const fraction = lerp((column - 2.5) / 3, ((pair - 1) * 2) / 3, laneMergeAt(s, pair));
-  const width = skylineWidthAt(s);
-  return (fraction * width) / (width - 24);
+  const lanes = skylineLaneUnitsAt(s);
+  const low = Math.floor(lanes);
+  const x = lerp(
+    laneStates[low].centres[column],
+    laneStates[Math.ceil(lanes)].centres[column],
+    lanes - low,
+  );
+  return x / ((lanes * LANE_WIDTH) / 2 - 24);
 }
 
 export function skylineGrid(index: number): { s: number; x: number; lane: number } {
-  const column = index % 6;
-  // Twice the row spacing keeps the same grid length while doubling lateral capacity.
-  const s = 96 + Math.floor(index / 6) * 158 + column * 12;
+  const column = index % GRID_COLUMNS;
+  const s = 96 + Math.floor(index / GRID_COLUMNS) * 237 + column * 12;
   const lane = skylineLaneAt(s, column);
   return { s, x: lane * (skylineWidthAt(s) - 24), lane };
 }

@@ -21,7 +21,9 @@ export function selectCourse(id: CourseId): boolean {
   game.best = loadBest();
   game.demoS = id === 'classic' ? total * 0.085 : 0;
   el.courseNote.textContent =
-    id === 'skyline' ? 'HILLS · BANKING · VERTICAL LOOP · CORKSCREW' : 'THE ORIGINAL FLAT CIRCUIT';
+    id === 'skyline'
+      ? '12 SECTIONS · 9-LANE START · HILLS, LOOPS & BANKING'
+      : 'THE ORIGINAL FLAT CIRCUIT';
   el.courseLabel.textContent = courseNames[id];
   el.mapTitle.textContent = courseNames[id] + (id === 'skyline' ? ' / 02' : ' / 01');
   refreshBest();

@@ -15,7 +15,7 @@ import { online, remoteCraft } from '../online/state';
 import { rivals } from '../sim/rivals';
 import { boostFX, camera, game, player } from '../sim/state';
 import { sampleSpatial } from '../track/spatial';
-import { skylineLaneAt, skylineWidthAt } from '../track/launch';
+import { skylineLaneAt, skylineWidthAt, GRID_COLUMNS } from '../track/launch';
 import { el } from '../ui/dom';
 import { surface } from './surface';
 import { craftMesh, environmentMesh, flameMesh, roadMesh } from './spatial-mesh';
@@ -339,7 +339,7 @@ export function drawSpatial(demo: boolean): void {
     const distance = demo && 'startS' in r ? game.demoS + r.startS : r.s;
     const lateral =
       demo && typeof r.id === 'number'
-        ? skylineLaneAt(distance, (r.id - 1) % 6) * (skylineWidthAt(distance) - 24)
+        ? skylineLaneAt(distance, (r.id - 1) % GRID_COLUMNS) * (skylineWidthAt(distance) - 24)
         : r.x;
     ship(sampleSpatial(distance, lateral), r.color, r.boosting);
   }

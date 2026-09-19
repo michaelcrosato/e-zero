@@ -24,7 +24,8 @@ test('four real WebRTC peers race, reject a fifth, finish together and rematch',
   browser,
   baseURL,
 }) => {
-  test.setTimeout(240_000);
+  // The longer Skyline circuit doubles real race duration.
+  test.setTimeout(420_000);
   const contexts: BrowserContext[] = [];
   const errors: string[] = [];
   try {
@@ -82,7 +83,7 @@ test('four real WebRTC peers race, reject a fifth, finish together and rematch',
     for (const page of guests)
       await page.waitForFunction(() => window.EZero.online.craft.every((c) => c.s > 100));
     await host.waitForFunction(() => window.EZero.online.phase === 'finished', null, {
-      timeout: 160_000,
+      timeout: 320_000,
     });
     const expected = await host.evaluate(() =>
       window.EZero.online.racers.map((r) => ({

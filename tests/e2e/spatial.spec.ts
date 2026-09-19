@@ -26,7 +26,8 @@ test('keeps Classic playable when WebGL is unavailable and explains the fallback
 test('drives every 3D feature for three laps with a camera attached through inversions', async ({
   page,
 }, testInfo) => {
-  test.setTimeout(180_000);
+  // Skyline now has twice the physical lap length at the same speed.
+  test.setTimeout(300_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/?course=skyline');
@@ -94,6 +95,7 @@ test('drives every 3D feature for three laps with a camera attached through inve
   }
   const seen = await observation;
   expect(seen.final).toBe('victory');
+  expect(seen.sections).toHaveLength(12);
   expect(seen.sections).toEqual(
     expect.arrayContaining([
       'Summit climb',
@@ -109,6 +111,7 @@ test('drives every 3D feature for three laps with a camera attached through inve
   const result = await page.evaluate(() => window.EZero.result);
   expect(result?.failed).toBe(false);
   expect(result?.laps).toHaveLength(3);
+  expect(result?.laps.every((lap) => lap > 45)).toBe(true);
   expect(await page.evaluate(() => window.EZero.stats.lap)).toBe(3);
   await page.locator('#continueButton').click();
   await page.waitForFunction(() => window.EZero.state === 'free');

@@ -81,10 +81,12 @@ anything but the craft's rear.
 The active course is held in `track/course.ts`. `sampleCourse` returns a 3D road
 frame; Classic delegates its position and curvature to the original sampler.
 Skyline resolves gravity along and across the road, while magnetic adhesion holds
-craft to its normal through loops and corkscrews. Both courses use the same lap
-length; Skyline achieves that through uniform world scaling after measuring its
-3D arc length. Course selection changes best-time storage, never cumulative `s`
-or lap accounting. Online room messages carry the host's validated course ID.
+craft to its normal through loops and corkscrews. Skyline is twice Classic's lap
+length at unchanged speeds. All active simulation, HUD, map and online lap math
+uses `courseLength()` and `raceDistance()`. Boost/repair placement also follows
+the selected length. The original terrain bake and Classic constants stay fixed.
+Course selection changes best-time storage, never the cumulative-distance model.
+Online room messages carry the host's validated course ID.
 
 Fixed 120 Hz step (`FIXED_STEP`), accumulated against wall time and capped at
 `MAX_STEPS_PER_FRAME` so a backgrounded tab resumes rather than trying to

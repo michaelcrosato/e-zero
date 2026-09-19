@@ -8,16 +8,22 @@
  */
 import { FIELD_SIZE } from '../config/constants';
 import { clamp, lerp, mod } from '../core/math';
-import { BASE, RACE_DISTANCE } from '../track/layout';
-import { total } from '../track/spline';
-import { course, sampleCourse, gradeAcceleration, courseWidthAt as widthAt } from '../track/course';
-import { skylineGrid, skylineLaneAt } from '../track/launch';
+import { BASE } from '../track/layout';
+import {
+  course,
+  sampleCourse,
+  gradeAcceleration,
+  courseWidthAt as widthAt,
+  courseLength,
+  raceDistance,
+} from '../track/course';
+import { skylineGrid, skylineLaneAt, GRID_COLUMNS } from '../track/launch';
 import { shipPalettes } from '../render/palettes';
 import { game, player } from './state';
 import type { Rival } from './types';
 import { online, onlinePosition } from '../online/state';
 
-/** Classic retains its original three-column grid. Skyline uses six. */
+/** Classic retains its original three-column grid. Skyline uses nine. */
 const COLUMN_LANES = [-0.7, 0, 0.7];
 /** Irrational-ish step so idle weave never synchronises across the field. */
 const PHASE_STEP = 2.399963;
@@ -104,7 +110,8 @@ function projectedLaneX(entry: PackEntry): number {
   const ahead = entry.s + entry.v * 0.75;
   const lane = entry.x / (widthAt(entry.s) - 24);
   const change = entry.r
-    ? skylineLaneAt(ahead, (entry.r.id - 1) % 6) - skylineLaneAt(entry.s, (entry.r.id - 1) % 6)
+    ? skylineLaneAt(ahead, (entry.r.id - 1) % GRID_COLUMNS) -
+      skylineLaneAt(entry.s, (entry.r.id - 1) % GRID_COLUMNS)
     : 0;
   return (lane + change) * (widthAt(ahead) - 24);
 }
@@ -117,6 +124,7 @@ function projectedLaneX(entry: PackEntry): number {
  * not need that resolution to look right.
  */
 export function planTraffic(): void {
+  const total = courseLength();
   const pack: PackEntry[] = rivals.map((r) => ({ r, s: mod(r.s, total), x: r.x, v: r.v }));
   pack.push({ r: null, s: mod(player.s, total), x: player.x, v: player.v });
   pack.sort((a, b) => a.s - b.s);
@@ -129,7 +137,7 @@ export function planTraffic(): void {
     const spatial = course.id === 'skyline';
     const nextX = spatial ? projectedLaneX(entry) : r.x;
     const near: Array<{ ds: number; x: number; nextX: number; v: number }> = [];
-    const neighbours = spatial ? 18 : 9;
+    const neighbours = spatial ? 27 : 9;
     for (let k = -neighbours; k <= neighbours; k++) {
       if (k === 0) continue;
       const q = pack[mod(i + k, pack.length)];
@@ -162,7 +170,7 @@ export function planTraffic(): void {
       if (r.laneHold <= 0) {
         const limit = widthAt(r.s + 100) - 26;
         const candidates = spatial
-          ? Array.from({ length: 6 }, (_, column) => skylineLaneAt(r.s + 100, column))
+          ? Array.from({ length: GRID_COLUMNS }, (_, column) => skylineLaneAt(r.s + 100, column))
           : [-0.76, -0.38, 0, 0.38, 0.76];
         let bestLane = r.targetLane;
         let bestScore = -Infinity;
@@ -200,6 +208,7 @@ const PLAN_INTERVAL = 0.12;
 
 export function updateRivals(dt: number): void {
   if (online.racing) return;
+  const RACE_DISTANCE = raceDistance();
   game.fieldTime += dt;
   game.trafficClock -= dt;
   if (game.trafficClock <= 0) {
@@ -211,7 +220,7 @@ export function updateRivals(dt: number): void {
     const old = r.s;
     const limit = widthAt(r.s) - 24;
     if (course.id === 'skyline') {
-      const lane = skylineLaneAt(r.s, (r.id - 1) % 6);
+      const lane = skylineLaneAt(r.s, (r.id - 1) % GRID_COLUMNS);
       if (Math.abs(r.targetLane - r.lane) < 1e-6) r.targetLane = lane;
       r.lane = lane;
     }

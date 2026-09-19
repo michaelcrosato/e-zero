@@ -1,7 +1,8 @@
 import { vec, type Frame3 } from '../core/vector';
-import { sample } from './spline';
-import { sampleSpatial } from './spatial';
-import { widthAt } from './layout';
+import { sample, total } from './spline';
+import { sampleSpatial, skyline } from './spatial';
+import { widthAt, pads, repair } from './layout';
+import { RACE_LAPS } from '../config/constants';
 import { skylineWidthAt } from './launch';
 
 export type CourseId = 'classic' | 'skyline';
@@ -12,6 +13,13 @@ export const courseNames: Record<CourseId, string> = {
 };
 export const isCourse = (value: unknown): value is CourseId =>
   value === 'classic' || value === 'skyline';
+
+export const courseLength = (): number => (course.id === 'skyline' ? skyline.length : total);
+export const raceDistance = (): number => courseLength() * RACE_LAPS;
+export const skylinePads = pads.map((pad) => ({ ...pad, s: (pad.s / total) * skyline.length }));
+export const skylineRepair = { ...repair, s: (repair.s / total) * skyline.length };
+export const coursePads = () => (course.id === 'skyline' ? skylinePads : pads);
+export const courseRepair = () => (course.id === 'skyline' ? skylineRepair : repair);
 
 export function courseWidthAt(s: number): number {
   return course.id === 'skyline' ? skylineWidthAt(s) : widthAt(s);

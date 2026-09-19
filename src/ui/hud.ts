@@ -10,10 +10,10 @@ import { clamp, mod } from '../core/math';
 import { formatTime } from '../core/time';
 import { drawMinimap } from '../render/minimap';
 import { boostFX, game, player } from '../sim/state';
-import { BASE, RACE_DISTANCE } from '../track/layout';
+import { BASE } from '../track/layout';
 import { KMH } from '../config/constants';
-import { total } from '../track/spline';
-import { course, sampleCourse } from '../track/course';
+import { course, sampleCourse, courseLength, raceDistance } from '../track/course';
+import { skylineLaneCountAt } from '../track/launch';
 import { sectionAt } from '../track/spatial';
 import { boostTouchButton, el } from './dom';
 
@@ -33,11 +33,17 @@ export function hideMessage(): void {
 }
 
 export function updateHUD(): void {
+  const total = courseLength();
+  const RACE_DISTANCE = raceDistance();
   const count = fieldSize();
   const frame = sampleCourse(player.s);
   el.trackFeature.hidden = course.id !== 'skyline';
   if (course.id === 'skyline')
     el.trackFeature.textContent =
+      String(sectionAt(player.s).index).padStart(2, '0') +
+      '/12 · ' +
+      skylineLaneCountAt(player.s) +
+      ' LANES\n' +
       sectionAt(player.s).name.toUpperCase() +
       '\n' +
       (frame.up.z < -0.25

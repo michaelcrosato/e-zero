@@ -7,7 +7,7 @@ import { Session, normalizeCode } from '../online/session';
 import { online, onlineActions } from '../online/state';
 import { shipPalettes } from '../render/palettes';
 import { game, player } from '../sim/state';
-import { total } from '../track/spline';
+import { courseLength } from '../track/course';
 import { el } from './dom';
 import { selectCourse } from './course';
 import { course, courseNames } from '../track/course';
@@ -27,7 +27,7 @@ function renderRoster(): void {
           : r.failed
             ? 'POWER OUT'
             : online.racing
-              ? `LAP ${Math.min(3, Math.floor(r.s / total) + 1)}/3`
+              ? `LAP ${Math.min(3, Math.floor(r.s / courseLength()) + 1)}/3`
               : r.ready
                 ? 'READY'
                 : 'NOT READY';

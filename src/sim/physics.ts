@@ -14,8 +14,7 @@ import { formatTime } from '../core/time';
 import { sound } from '../audio/sound';
 import { project } from '../render/project';
 import { surface } from '../render/surface';
-import { BASE, MAX, RACE_DISTANCE, pads, repair } from '../track/layout';
-import { total } from '../track/spline';
+import { BASE, MAX } from '../track/layout';
 import {
   course,
   sampleCourse as sample,
@@ -23,6 +22,10 @@ import {
   lateralDrift,
   courseWidthAt as widthAt,
   courseRepairX as repairX,
+  courseLength,
+  raceDistance,
+  coursePads,
+  courseRepair,
 } from '../track/course';
 import { projectSpatial } from '../render/spatial-renderer';
 import { offset } from '../core/vector';
@@ -87,6 +90,7 @@ export function hitRail(side: number, limit: number): void {
 
 /** Awards lap splits for every lap boundary crossed this step. */
 function updateRaceLaps(oldS: number, dt: number): void {
+  const total = courseLength();
   const before = Math.floor(oldS / total);
   const after = Math.floor(player.s / total);
   for (let lap = before + 1; lap <= Math.min(after, RACE_LAPS); lap++) {
@@ -117,6 +121,7 @@ function updateRaceLaps(oldS: number, dt: number): void {
 
 /** Lap timing for free drive, which has no lap limit. */
 function updateFreeLap(oldS: number, dt: number): void {
+  const total = courseLength();
   game.freeLapTime += dt;
   if (Math.floor(player.s / total) > Math.floor(oldS / total)) {
     const over = mod(player.s, total) / Math.max(1, player.v);
@@ -131,6 +136,10 @@ function updateFreeLap(oldS: number, dt: number): void {
 }
 
 export function updateRace(dt: number, free = false): void {
+  const total = courseLength();
+  const RACE_DISTANCE = raceDistance();
+  const pads = coursePads();
+  const repair = courseRepair();
   const input = getInput();
   const p = sample(player.s);
   const oldS = player.s;

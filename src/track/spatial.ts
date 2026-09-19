@@ -13,19 +13,23 @@ import {
   type Frame3,
   type Vec3,
 } from '../core/vector';
-import { total } from './spline';
+import { total as classicLength } from './spline';
 
 export type SectionKind = 'straight' | 'hill' | 'bank' | 'loop' | 'corkscrew';
 export interface Section {
+  index: number;
   name: string;
   kind: SectionKind;
   start: number;
   end: number;
+  lanes: number;
+  entryLanes: number;
 }
 export interface Segment {
   name: string;
   kind: SectionKind;
   length: number;
+  lanes: number;
   radius?: number;
   height?: number;
   bank?: number;
@@ -33,16 +37,18 @@ export interface Segment {
 
 /** A closed circuit made from reusable local-space primitives. Lengths are authoring units. */
 export const SKYLINE_DESIGN: readonly Segment[] = [
-  { name: 'Launch straight', kind: 'straight', length: 900 },
-  { name: 'Summit climb', kind: 'hill', length: 2000, height: 650 },
-  { name: 'Sky bridge', kind: 'straight', length: 900 },
-  { name: 'High bank', kind: 'bank', length: Math.PI * 450, radius: 900, bank: -0.62 },
-  { name: 'Vertical loop', kind: 'loop', length: 2200, radius: 550 },
-  { name: 'Carousel', kind: 'bank', length: Math.PI * 450, radius: 900, bank: -0.48 },
-  { name: 'Corkscrew', kind: 'corkscrew', length: 3800, radius: 290 },
-  { name: 'Sweeper', kind: 'bank', length: Math.PI * 450, radius: 900, bank: -0.55 },
-  { name: 'Valley descent', kind: 'hill', length: 2200, height: -380 },
-  { name: 'Home bend', kind: 'bank', length: Math.PI * 450, radius: 900, bank: -0.42 },
+  { name: 'Launch straight', kind: 'straight', length: 6000, lanes: 8 },
+  { name: 'Summit climb', kind: 'hill', length: 2600, height: 850, lanes: 7 },
+  { name: 'Sky bridge', kind: 'straight', length: 1400, lanes: 6 },
+  { name: 'High bank', kind: 'bank', length: Math.PI * 675, radius: 1350, bank: -0.62, lanes: 5 },
+  { name: 'Vertical loop', kind: 'loop', length: 4400, radius: 800, lanes: 4 },
+  { name: 'Carousel', kind: 'bank', length: Math.PI * 675, radius: 1350, bank: -0.48, lanes: 3 },
+  { name: 'Corkscrew', kind: 'corkscrew', length: 6000, radius: 420, lanes: 6 },
+  { name: 'Ridge run', kind: 'hill', length: 4000, height: 420, lanes: 4 },
+  { name: 'Sweeper', kind: 'bank', length: Math.PI * 675, radius: 1350, bank: -0.55, lanes: 5 },
+  { name: 'Valley descent', kind: 'hill', length: 2600, height: -380, lanes: 4 },
+  { name: 'Harbor straight', kind: 'straight', length: 1800, lanes: 3 },
+  { name: 'Home bend', kind: 'bank', length: Math.PI * 675, radius: 1350, bank: -0.42, lanes: 6 },
 ];
 
 const ease = (t: number): number => t * t * t * (t * (t * 6 - 15) + 10);
@@ -106,7 +112,15 @@ export function buildSpatial(
     const last = raw[raw.length - 1];
     origin = vec(last.x, last.y, last.z);
     heading = last.heading;
-    sections.push({ name: part.name, kind: part.kind, start, end: distance });
+    sections.push({
+      index: sections.length + 1,
+      name: part.name,
+      kind: part.kind,
+      start,
+      end: distance,
+      lanes: part.lanes,
+      entryLanes: sections.at(-1)?.lanes ?? design[design.length - 1].lanes,
+    });
   }
   if (length(sub(raw[0], raw[raw.length - 1])) > 0.01) throw new Error('Spatial course must close');
   const worldScale = lapLength / distance;
@@ -158,8 +172,23 @@ export function buildSpatial(
   };
 }
 
-// Same lap length as Neon Harbor, so the speed scale and three-lap race duration stay familiar.
-export const skyline = buildSpatial(SKYLINE_DESIGN, total);
+// More physical distance, not a speed rescale: the field has time to separate before each merge.
+const total = classicLength * 2;
+const built = buildSpatial(SKYLINE_DESIGN, total);
+const gridIndex = Math.floor(2200 / (total / built.frames.length));
+const gridOffset = (gridIndex * total) / built.frames.length;
+// Place the line within section 1. Its approach can reopen to nine lanes without
+// widening sections 7–12 beyond six or introducing a discontinuity at the line.
+built.frames.push(...built.frames.splice(0, gridIndex));
+export const skyline = {
+  ...built,
+  length: total,
+  sections: built.sections.map((part) => ({
+    ...part,
+    start: part.start - gridOffset,
+    end: part.end - gridOffset,
+  })),
+};
 
 export function sampleSpatial(s: number, lateral = 0): Frame3 {
   const f = (mod(s, total) / total) * skyline.frames.length;

@@ -9,7 +9,7 @@ impulses. Classic solo physics and the 99-rival field are unchanged.
 Choose a circuit before creating the room. Skyline includes hills, banking, loops
 and a corkscrew; Classic is the original flat track. The host's choice is shown in
 the lobby and synchronized to guests. Skyline uses its wider launch grid for online
-starts and rematches too. The network protocol version is now 3;
+starts and rematches too. The network protocol version is now 4;
 older builds receive a refresh/version message instead of joining an incompatible
 race. Remote craft reconstruct their full 3D orientation from the shared course
 and distance, so no independent Euler rotations can drift between clients.

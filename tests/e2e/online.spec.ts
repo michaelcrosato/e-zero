@@ -5,11 +5,13 @@ async function racer(
   browser: Browser,
   baseURL: string,
   name: string,
+  view = 'chase',
 ): Promise<{ page: Page; context: BrowserContext }> {
   const context = await browser.newContext({ baseURL, viewport: { width: 600, height: 400 } });
   const page = await context.newPage();
   await page.goto('/');
   if (name === 'Ada') await page.locator('#courseSelect').selectOption('classic');
+  await page.locator('#viewSelect').selectOption(view);
   await page.locator('#onlineButton').click();
   await page.locator('#onlineName').fill(name);
   return { page, context };
@@ -19,6 +21,62 @@ async function join(page: Page, code: string): Promise<void> {
   await page.locator('#onlineJoinCode').fill(code);
   await page.locator('#onlineJoin').click();
 }
+
+test('cockpit traffic cameras use the human field in an online race', async ({
+  browser,
+  baseURL,
+}) => {
+  const host = await racer(browser, baseURL ?? '', 'Cockpit host', 'cockpit');
+  const guest = await racer(browser, baseURL ?? '', 'Pilot guest', 'pilot');
+  try {
+    await host.page.locator('#onlineCreate').click();
+    await expect(host.page.locator('#onlineCount')).toHaveText('1 / 4 PLAYERS', {
+      timeout: 20_000,
+    });
+    await join(guest.page, await host.page.locator('#onlineCode').innerText());
+    await expect(guest.page.locator('#onlineReady')).toBeEnabled({ timeout: 20_000 });
+    await guest.page.locator('#onlineReady').click();
+    await expect(host.page.locator('#onlineStart')).toBeEnabled();
+    await host.page.locator('#onlineStart').click();
+    await host.page.waitForFunction(
+      () => window.EZero.state === 'race' && window.EZero.view.contacts.length > 0,
+    );
+    const seen = await host.page.evaluate(() => ({
+      view: window.EZero.view,
+      online: window.EZero.online,
+      stats: window.EZero.stats,
+    }));
+    expect(seen.view.mode).toBe('cockpit');
+    expect(seen.view.feeds.frame).toBeGreaterThan(0);
+    expect(seen.stats.rivalCount).toBe(1);
+    expect(seen.view.contacts).toHaveLength(1);
+    expect(seen.view.contacts[0].id).toBe(seen.online.craft[0].id);
+    // Bring the cars within lateral range, then brake the host so the guest catches
+    // up in the interpolated remote field as well as in the network's raw snapshots.
+    await guest.page.keyboard.down('ArrowLeft');
+    await guest.page.waitForFunction(
+      (target) => window.EZero.stats.lateral < target,
+      seen.stats.lateral + 80,
+    );
+    await guest.page.keyboard.up('ArrowLeft');
+    await host.page.keyboard.down('ArrowDown');
+    const detected = await host.page.waitForFunction(
+      () => window.EZero.view.contacts.find((c) => c.alongside),
+      null,
+      { timeout: 10_000 },
+    );
+    await host.page.keyboard.up('ArrowDown');
+    // Capture the actual detection; the cars can pass each other before another round trip.
+    expect((await detected.jsonValue())?.alongside).toBe(true);
+    await guest.page.keyboard.down('KeyQ');
+    await guest.page.waitForFunction(() => window.EZero.view.lookYaw < -1.4);
+    await guest.page.keyboard.up('KeyQ');
+    expect(await guest.page.evaluate(() => window.EZero.view.mode)).toBe('pilot');
+  } finally {
+    await host.context.close();
+    await guest.context.close();
+  }
+});
 
 test('four real WebRTC peers race, reject a fifth, finish together and rematch', async ({
   browser,

@@ -20,12 +20,24 @@ import { drawSpeed } from './speedlines';
 import { surface } from './surface';
 import { course } from '../track/course';
 import { drawSpatial } from './spatial-renderer';
+import { drivingView, insideView, pilotCamera, pilotView } from './driving-view';
+import { drawCockpit } from './cockpit';
 
 /** Seconds for the finish camera to complete its orbit. */
 const ORBIT_TIME = 7.2;
 
 function solveCamera(demo: boolean): void {
   const { h: H, viewUnit } = surface;
+  if (!demo && insideView()) {
+    Object.assign(pilotView, pilotCamera(surface.w / H));
+    camera.x = pilotView.eye.x;
+    camera.y = pilotView.eye.y;
+    camera.height = pilotView.eye.z;
+    camera.angle = Math.atan2(pilotView.forward.y, pilotView.forward.x);
+    camera.focal = H / (2 * Math.tan(pilotView.fov / 2));
+    camera.horizon = Math.round(H / 2);
+    return;
+  }
 
   const s = demo ? game.demoS : player.s;
   const p = sample(s);
@@ -84,8 +96,11 @@ export function render(): void {
     drawGround();
     drawObjects(demo);
   }
-  drawSpeed();
-  drawBoostFX(demo);
+  // External thruster rings and screen-space streaks do not belong inside the canopy.
+  if (!insideView()) {
+    drawSpeed();
+    drawBoostFX(demo);
+  }
 
   for (const p of sparkParticles) {
     ctx.globalAlpha = clamp(p.life / 0.18, 0, 1);
@@ -93,14 +108,15 @@ export function render(): void {
     ctx.fillRect(p.x | 0, p.y | 0, 3, 2);
   }
   ctx.globalAlpha = 1;
+  if (insideView() && drivingView.mode === 'cockpit') drawCockpit();
 
   // Impact shake is random; boost vibration is a steady high-frequency hum.
-  const vibration = (hyper * 0.6 + kick * 1.6) * (1 - blend);
+  const vibration = insideView() ? 0 : (hyper * 0.6 + kick * 1.6) * (1 - blend);
   const sx =
-    (game.shake ? (Math.random() - 0.5) * game.shake * 2 : 0) +
+    (game.shake && !insideView() ? (Math.random() - 0.5) * game.shake * 2 : 0) +
     Math.sin(game.worldTime * 93) * vibration;
   const sy =
-    (game.shake ? (Math.random() - 0.5) * game.shake : 0) +
+    (game.shake && !insideView() ? (Math.random() - 0.5) * game.shake : 0) +
     Math.cos(game.worldTime * 117) * vibration * 0.6;
 
   out.fillStyle = '#080c17';

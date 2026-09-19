@@ -1,0 +1,140 @@
+.view-picker {
+  margin: 12px 0 18px;
+  max-width: 340px;
+  font:
+    10px 'Courier New',
+    monospace;
+  color: #afc9d5;
+}
+.view-picker label {
+  display: block;
+  letter-spacing: 2px;
+  margin-bottom: 7px;
+}
+.view-picker select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #73c9d780;
+  background: #0b192c;
+  color: #eafaff;
+  font:
+    700 12px 'Courier New',
+    monospace;
+  border-radius: 0;
+  pointer-events: auto;
+}
+.view-picker p {
+  font:
+    9px/1.5 'Courier New',
+    monospace;
+  margin: 6px 0 0;
+}
+.view-picker select:focus-visible,
+.look-controls button:focus-visible,
+.camera-button:focus-visible {
+  outline: 2px solid #8ffff0;
+  outline-offset: 3px;
+}
+.camera-button {
+  border: 1px solid #a5e4df66;
+  padding: 8px 10px;
+  min-height: 32px;
+}
+.app:not([data-mode='title'])[data-view='cockpit'] .hud-bottom,
+.app:not([data-mode='title'])[data-view='cockpit'] .hud-top > div:nth-child(2),
+.app:not([data-mode='title'])[data-view='cockpit'] .drive-hint,
+.app:not([data-mode='title'])[data-view='cockpit'] .boost-callout {
+  visibility: hidden;
+}
+.look-controls {
+  position: absolute;
+  inset: auto var(--right) 36% var(--left);
+  z-index: 8;
+  display: none;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.app:not([data-mode='title']):not([data-mode='paused']):not(
+    [data-mode='results']
+  )[data-view='pilot']
+  .look-controls,
+.app:not([data-mode='title']):not([data-mode='paused']):not(
+    [data-mode='results']
+  )[data-view='cockpit']
+  .look-controls {
+  display: flex;
+}
+.look-controls button {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #8ab4c45c;
+  background: #091824b8;
+  color: #c9e6ed;
+  font:
+    10px 'Courier New',
+    monospace;
+}
+.look-controls span {
+  opacity: 0.55;
+  margin-left: 5px;
+}
+.look-controls .active {
+  border-color: #8ffff0;
+  background: #274757;
+}
+@media (max-width: 600px) {
+  .view-picker {
+    max-width: 300px;
+    margin: 9px 0 14px;
+  }
+  .view-picker select {
+    font-size: 11px;
+    padding: 9px;
+  }
+  .view-picker p {
+    font-size: 8px;
+  }
+  .look-controls {
+    bottom: 40%;
+  }
+  .look-controls button {
+    min-height: 44px;
+    font-size: 9px;
+    padding: 8px;
+  }
+  .look-controls span {
+    display: none;
+  }
+  .camera-button {
+    font-size: 8px;
+    padding: 6px;
+  }
+  .app[data-view='cockpit'] .track-feature {
+    max-width: 130px;
+  }
+}
+@media (max-height: 650px) and (min-aspect-ratio: 1/1) {
+  .view-picker {
+    margin: 6px 0 10px;
+    max-width: 300px;
+  }
+  .view-picker select {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+  .view-picker label,
+  .view-picker p {
+    font-size: 8px;
+    margin-bottom: 3px;
+  }
+  .title-content .title-stats {
+    display: none;
+  }
+  .app[data-view='cockpit'] .track-feature {
+    display: none;
+  }
+}

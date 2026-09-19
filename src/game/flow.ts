@@ -18,6 +18,7 @@ import { boostTouchButton, el } from '../ui/dom';
 import { hideMessage, refreshBest, showMessage, updateHUD } from '../ui/hud';
 import { clearTouch } from '../ui/touch';
 import { fieldSize, online, onlineActions, onlinePosition } from '../online/state';
+import { drivingView } from '../render/driving-view';
 
 /** Countdown duration, chosen so "03" is readable before it ticks. */
 const COUNTDOWN = 2.6;
@@ -36,7 +37,8 @@ export function syncModeUI(): void {
   el.app.dataset.mode = game.mode;
   sound.syncMusic();
   const cinematic =
-    game.mode === 'victory' || (game.mode === 'paused' && game.pausedMode === 'victory');
+    drivingView.mode === 'chase' &&
+    (game.mode === 'victory' || (game.mode === 'paused' && game.pausedMode === 'victory'));
   el.stage.classList.toggle('cinematic', cinematic);
   el.finishDock.classList.toggle('hidden', game.mode !== 'victory');
   el.cinemaTag.classList.toggle('hidden', game.mode !== 'victory');
@@ -46,6 +48,7 @@ export function syncModeUI(): void {
 }
 
 export function resetPlayer(): void {
+  drivingView.lookYaw = 0;
   clearBoostFX();
   Object.assign(player, createPlayer());
   resetRivals();
@@ -158,6 +161,7 @@ export function showTitle(): void {
 export function pauseRace(): void {
   if (online.active) return;
   if (PAUSABLE_MODES.includes(game.mode)) {
+    drivingView.lookYaw = 0;
     game.pausedMode = game.mode;
     game.mode = 'paused';
     held.clear();

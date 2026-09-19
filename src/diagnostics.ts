@@ -29,6 +29,9 @@ import { sectionAt, skyline } from './track/spatial';
 import { spatialView } from './render/spatial-renderer';
 import { viewport } from './ui/viewport';
 import { fieldSize, online, remoteCraft } from './online/state';
+import { vehicle } from './config/vehicles';
+import { drivingView, insideView, pilotView, playerVehiclePose } from './render/driving-view';
+import { cameraFeeds } from './render/camera-feeds';
 
 function createApi(loop: LoopHandle) {
   return Object.freeze({
@@ -118,6 +121,38 @@ function createApi(loop: LoopHandle) {
         renderHeight: surface.h,
         viewUnit: surface.viewUnit,
         canvasAspect: surface.w / surface.h,
+      };
+    },
+
+    get view() {
+      const pose = playerVehiclePose();
+      return {
+        mode: drivingView.mode,
+        inside: insideView(),
+        vehicle: vehicle.model.id,
+        mount: { ...vehicle.model[course.id].pilotEye },
+        scale: { ...vehicle.model[course.id].scale },
+        lookYaw: drivingView.lookYaw,
+        steer: player.steer,
+        eye: { ...pilotView.eye },
+        forward: { ...pilotView.forward },
+        right: { ...pilotView.right },
+        up: { ...pilotView.up },
+        fov: pilotView.fov,
+        vehiclePose: {
+          ...pose,
+          forward: { ...pose.forward },
+          right: { ...pose.right },
+          up: { ...pose.up },
+        },
+        feeds: {
+          frame: cameraFeeds.frame,
+          time: cameraFeeds.time,
+          rearCraft: cameraFeeds.rear.drawnCraft,
+          leftCraft: cameraFeeds.left.drawnCraft,
+          rightCraft: cameraFeeds.right.drawnCraft,
+        },
+        contacts: cameraFeeds.contacts.map((contact) => ({ ...contact })),
       };
     },
 

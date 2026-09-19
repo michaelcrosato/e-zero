@@ -23,6 +23,7 @@ import { refreshBest } from './ui/hud';
 import { bindInput } from './ui/input';
 import { bindOnline } from './ui/online';
 import { bindCourse } from './ui/course';
+import { bindView } from './ui/view';
 import { bindViewport, resizeViewport } from './ui/viewport';
 
 function boot(): void {
@@ -37,6 +38,7 @@ function boot(): void {
   bindViewport();
   bindInput();
   bindCourse();
+  bindView();
   refreshBest();
 
   // 4. First frame.

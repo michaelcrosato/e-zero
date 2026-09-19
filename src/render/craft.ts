@@ -5,8 +5,8 @@
  *
  * - `shipDraw` blits the pre-rendered rear-view sprite. This is what you see for
  *   the whole race, and for every distant rival.
- * - The face-sorted 3D build below only appears when the finish camera swings
- *   away from directly behind the craft, so it can show the front and sides.
+ * - The face-sorted 3D build below appears when the finish or interior camera
+ *   looks away from directly behind the craft, so it can show the front and sides.
  *   Painter's algorithm over ~40 flat faces is plenty at this scale.
  */
 import { TAU } from '../config/constants';
@@ -17,6 +17,9 @@ import type { SamplePoint } from '../track/spline';
 import { project, type Projected } from './project';
 import { boostGhosts, polygon, shipPalettes, shipSprites, type Point2 } from './sprites';
 import { surface } from './surface';
+import { vehicle } from '../config/vehicles';
+import { offset, vec } from '../core/vector';
+import { vehiclePose } from './driving-view';
 
 type Vertex3 = readonly [number, number, number];
 type Outline = ReadonlyArray<Point2>;
@@ -166,6 +169,7 @@ export function drawCraft(
   lean = 0,
   isPlayer = false,
   rivalBoost = false,
+  allAngles = false,
 ): void {
   const center = project(p.x, p.y, 4);
   if (!center || center.scale < CULL_SCALE) return;
@@ -176,10 +180,10 @@ export function drawCraft(
     return;
   }
 
-  // Fade to the 3D build only once the camera is off-axis and cinematic.
+  // Side windows and camera feeds need front/side faces even outside the finish orbit.
   const meshAmount =
     smooth((Math.abs(angleDiff(camera.angle, p.angle)) - 0.045) / 0.28) *
-    smooth(game.cameraBlend / 0.4);
+    (allAngles ? 1 : smooth(game.cameraBlend / 0.4));
 
   if (meshAmount < 1) {
     ctx.save();
@@ -199,15 +203,27 @@ export function drawCraft(
   const fy = Math.sin(yaw);
   const rx = -fy;
   const ry = fx;
-  const hover = 3.4 + Math.sin(game.worldTime * 24 + color) * 0.55;
-  const roll = lean * 0.07;
+  const body = vehicle.model.classic;
+  const pose = vehiclePose(
+    {
+      ...p,
+      z: 0,
+      bank: 0,
+      forward: vec(Math.cos(p.angle), Math.sin(p.angle)),
+      right: vec(-Math.sin(p.angle), Math.cos(p.angle)),
+      up: vec(0, 0, 1),
+    },
+    body,
+    'classic',
+    lean / 0.75,
+    0,
+    game.worldTime + (isPlayer ? 0 : color / 24),
+  );
 
   /** Local craft space -> world -> screen. u is across, f is forward, third is height. */
   const point = (v: Vertex3): Projected | null => {
-    const u = v[0] * 0.72;
-    const f = v[1] * 0.7;
-    const h = hover + v[2] * 0.85 + u * roll;
-    return project(p.x + rx * u + fx * f, p.y + ry * u + fy * f, h);
+    const point = offset(pose, v[0] * body.scale.x, v[2] * body.scale.z, v[1] * body.scale.y);
+    return project(point.x, point.y, point.z);
   };
 
   const face = (vertices: ReadonlyArray<Vertex3>, fill: string, alpha = 1): void => {

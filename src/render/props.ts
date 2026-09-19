@@ -18,6 +18,7 @@ import { project, type Projected } from './project';
 import { sphereSprites } from './sprites';
 import { surface } from './surface';
 import { online, remoteCraft } from '../online/state';
+import { insideView } from './driving-view';
 
 /** Objects beyond this depth are not drawn. */
 const FAR_DEPTH = 1850;
@@ -128,7 +129,11 @@ type Drawable =
   | { kind: 'player'; p: SamplePoint; pr: Projected; depth: number };
 
 /** Draws all scenery and craft in one back-to-front pass. */
-export function drawObjects(demo: boolean): void {
+export function drawObjects(
+  demo: boolean,
+  hidePlayer = insideView(),
+  allAngles = insideView(),
+): void {
   const { ctx, w: W, h: H } = surface;
   const objects: Drawable[] = [];
 
@@ -168,7 +173,7 @@ export function drawObjects(demo: boolean): void {
   const x = demo ? Math.sin(game.worldTime * 0.6) * 16 : player.x;
   const p = sample(s, x);
   const pr = project(p.x, p.y, 3);
-  if (pr) objects.push({ kind: 'player', p, pr, depth: pr.depth });
+  if (pr && !hidePlayer) objects.push({ kind: 'player', p, pr, depth: pr.depth });
 
   objects.sort((a, b) => b.depth - a.depth);
 
@@ -188,6 +193,7 @@ export function drawObjects(demo: boolean): void {
         Math.sin(game.worldTime + ob.car.color) * 0.15,
         false,
         !!ob.car.boosting && (ob.car.v ?? 0) > BASE * 1.16,
+        allAngles,
       );
     } else if (ob.o.type === 'orb') {
       drawOrb(ob.o, ob.pr);

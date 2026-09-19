@@ -19,6 +19,8 @@ import { skylineLaneAt, skylineWidthAt, GRID_COLUMNS } from '../track/launch';
 import { el } from '../ui/dom';
 import { surface } from './surface';
 import { craftMesh, environmentMesh, flameMesh, roadMesh } from './spatial-mesh';
+import { vehicle } from '../config/vehicles';
+import { insideView, pilotView, vehiclePose, type ViewCamera } from './driving-view';
 
 interface BufferMesh {
   buffer: WebGLBuffer;
@@ -216,6 +218,11 @@ export function prepareSpatialRenderer(): boolean {
 }
 
 function solveSpatialCamera(demo: boolean): void {
+  if (!demo && insideView()) {
+    Object.assign(spatialView, pilotView);
+    camera.horizon = surface.h / 2;
+    return;
+  }
   const s = demo ? game.demoS : player.s;
   const frame = sampleSpatial(s);
   const lateral = demo ? 0 : player.x;
@@ -258,20 +265,50 @@ export function drawSpatial(demo: boolean): void {
     return;
   }
   solveSpatialCamera(demo);
+  spatialView.drawnCraft = drawSpatialCamera(
+    spatialView,
+    surface.ctx,
+    surface.w,
+    surface.h,
+    demo,
+    !insideView(),
+  );
+}
+
+/** Low-resolution camera feeds reuse the GPU resources without changing the main camera. */
+export function drawSpatialCamera(
+  cameraView: ViewCamera,
+  target: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  demo = false,
+  showPlayer = false,
+): number {
+  const renderer = graphics.renderer;
+  if (!renderer || !spatialView.ready) {
+    target.fillStyle = '#080e20';
+    target.fillRect(0, 0, width, height);
+    target.fillStyle = '#8cbdc8';
+    target.font = '12px monospace';
+    target.fillText('CAMERA RECONNECTING', 8, height / 2);
+    return 0;
+  }
   const { gl } = renderer;
   if (el.spatialCanvas.width !== surface.w || el.spatialCanvas.height !== surface.h) {
     el.spatialCanvas.width = surface.w;
     el.spatialCanvas.height = surface.h;
   }
-  gl.viewport(0, 0, surface.w, surface.h);
+  gl.viewport(0, 0, width, height);
+  gl.enable(gl.SCISSOR_TEST);
+  gl.scissor(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  const focal = 1 / Math.tan(spatialView.fov / 2);
+  const focal = 1 / Math.tan(cameraView.fov / 2);
   const view = (u: Record<string, WebGLUniformLocation>): void => {
-    uniformVec(gl, u.viewForward, spatialView.forward);
-    uniformVec(gl, u.viewRight, spatialView.right);
-    uniformVec(gl, u.viewUp, spatialView.up);
+    uniformVec(gl, u.viewForward, cameraView.forward);
+    uniformVec(gl, u.viewRight, cameraView.right);
+    uniformVec(gl, u.viewUp, cameraView.up);
     gl.uniform1f(u.focal, focal);
-    gl.uniform1f(u.aspect, surface.w / surface.h);
+    gl.uniform1f(u.aspect, width / height);
   };
   gl.useProgram(renderer.skyProgram);
   view(renderer.skyUniforms);
@@ -285,7 +322,7 @@ export function drawSpatial(demo: boolean): void {
   gl.useProgram(renderer.program);
   const u = renderer.uniforms;
   view(u);
-  uniformVec(gl, u.eye, spatialView.eye);
+  uniformVec(gl, u.eye, cameraView.eye);
   gl.enableVertexAttribArray(renderer.position);
   gl.enableVertexAttribArray(renderer.color);
   const transform = (origin: Vec3, right: Vec3, forward: Vec3, up: Vec3, tint: Vec3): void => {
@@ -304,36 +341,35 @@ export function drawSpatial(demo: boolean): void {
   transform(vec(), vec(1), vec(0, 1), vec(0, 0, 1), vec(1, 1, 1));
   draw(renderer.environment);
   draw(renderer.road);
-  spatialView.drawnCraft = 0;
+  let drawnCraft = 0;
   const ship = (frame: Frame3, color: number, boosting: boolean, steer = 0): void => {
     if (
-      dot(sub(frame, spatialView.eye), spatialView.forward) < -80 ||
+      dot(sub(frame, cameraView.eye), cameraView.forward) < -80 ||
       Math.hypot(
-        frame.x - spatialView.eye.x,
-        frame.y - spatialView.eye.y,
-        frame.z - spatialView.eye.z,
+        frame.x - cameraView.eye.x,
+        frame.y - cameraView.eye.y,
+        frame.z - cameraView.eye.z,
       ) > 7000
     )
       return;
-    const lean = steer * 0.09;
-    const right = add(scale(frame.right, Math.cos(lean)), scale(frame.up, Math.sin(lean)));
+    const pose = vehiclePose(frame, vehicle.model.skyline, 'skyline', steer, 0, game.worldTime);
     transform(
-      offset(frame, 0, 4),
-      right,
-      frame.forward,
-      cross(frame.forward, right),
+      pose,
+      scale(pose.right, vehicle.model.skyline.scale.x),
+      scale(pose.forward, vehicle.model.skyline.scale.y),
+      scale(pose.up, vehicle.model.skyline.scale.z),
       TINTS[color % 4],
     );
     draw(renderer.craft);
     transform(
       offset(frame, 0, 4),
-      right,
+      pose.right,
       scale(frame.forward, boosting ? 1.5 : 1),
       frame.up,
       vec(1, 1, 1),
     );
     draw(renderer.flame);
-    spatialView.drawnCraft++;
+    drawnCraft++;
   };
   for (const r of online.racing ? remoteCraft : rivals) {
     const distance = demo && 'startS' in r ? game.demoS + r.startS : r.s;
@@ -343,15 +379,28 @@ export function drawSpatial(demo: boolean): void {
         : r.x;
     ship(sampleSpatial(distance, lateral), r.color, r.boosting);
   }
-  ship(
-    sampleSpatial(demo ? game.demoS : player.s, demo ? 0 : player.x),
-    online.racing ? (online.racers.find((r) => r.id === online.id)?.slot ?? 0) : 0,
-    player.boosting,
-    player.steer,
-  );
+  if (showPlayer)
+    ship(
+      sampleSpatial(demo ? game.demoS : player.s, demo ? 0 : player.x),
+      online.racing ? (online.racers.find((r) => r.id === online.id)?.slot ?? 0) : 0,
+      player.boosting,
+      player.steer,
+    );
   gl.disableVertexAttribArray(renderer.position);
   gl.disableVertexAttribArray(renderer.color);
-  surface.ctx.drawImage(el.spatialCanvas, 0, 0);
+  gl.disable(gl.SCISSOR_TEST);
+  target.drawImage(
+    el.spatialCanvas,
+    0,
+    el.spatialCanvas.height - height,
+    width,
+    height,
+    0,
+    0,
+    width,
+    height,
+  );
+  return drawnCraft;
 }
 
 /** Rail sparks use the same 3D camera as the road and craft. */

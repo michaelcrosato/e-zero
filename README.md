@@ -28,18 +28,33 @@ pnpm dev          # http://localhost:5319
 
 ## Controls
 
-| Action  | Keys                        |
-| ------- | --------------------------- |
-| Steer   | `←` `→` or `A` `D`          |
-| Boost   | `Space` or `Shift`          |
-| Brake   | `↓` or `S`                  |
-| Pause   | `Esc` or `P`                |
-| Restart | `R`                         |
-| Mute    | `M`                         |
-| Exit    | `X`                         |
-| Camera  | `C` (auto pilot / free run) |
+| Action     | Keys                              |
+| ---------- | --------------------------------- |
+| Steer      | `←` `→` or `A` `D`                |
+| Boost      | `Space` or `Shift`                |
+| Brake      | `↓` or `S`                        |
+| Pause      | `Esc` or `P`                      |
+| Restart    | `R`                               |
+| Mute       | `M`                               |
+| Exit       | `X`                               |
+| View       | `V` — Chase / Pilot eye / Cockpit |
+| Look       | Hold `Q` / `E` — left / right     |
+| Auto pilot | `C` (after finishing / free run)  |
 
 Touch controls appear automatically on coarse-pointer devices.
+
+Choose a driving view on the title screen or use the camera button at any time.
+The choice is remembered. **Pilot eye** is a clear first-person view from inside
+the vehicle's glass canopy. **Cockpit** uses that same eye position and adds a
+steering wheel, power instruments, a live rear-view mirror and an E / VISION
+dashboard screen with left/right camera feeds and a nearby-traffic visualization.
+Amber vehicles and arrows identify cars alongside or closing from behind. Speed
+is projected onto the windshield. Hold Q / E or the on-screen LOOK buttons to
+look out the side windows; release to face forward. Looking does not steer.
+
+Both views work on Skyline, Classic and in online races. The camera remains at
+the vehicle mount during boost, banking, loops and the finish sequence. Each
+vehicle definition owns its pilot-eye and camera mounts, ready for future models.
 
 ## Play online
 

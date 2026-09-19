@@ -10,6 +10,8 @@ import { game, held, touch } from '../sim/state';
 import { ACTIVE_MODES, PAUSABLE_MODES } from '../sim/types';
 import { el, touchButtons } from './dom';
 import { clearTouch } from './touch';
+import { cycleView } from './view';
+import { drivingView } from '../render/driving-view';
 
 export interface InputState {
   /** -1 left, 0 straight, 1 right. */
@@ -36,6 +38,9 @@ const GAME_KEYS = new Set([
   'KeyR',
   'KeyM',
   'KeyC',
+  'KeyV',
+  'KeyQ',
+  'KeyE',
   'KeyX',
   'Enter',
 ]);
@@ -103,6 +108,7 @@ function onKeyDown(e: KeyboardEvent): void {
   }
 
   if (e.code === 'KeyM') return sound.toggle();
+  if (e.code === 'KeyV') return cycleView();
   if (e.code === 'KeyX' && ['victory', 'free', 'paused', 'results'].includes(game.mode))
     return returnToTitle();
   if (e.code === 'KeyC') {
@@ -156,9 +162,15 @@ export function bindInput(): void {
   window.addEventListener('blur', () => {
     held.clear();
     clearTouch();
+    drivingView.lookYaw = 0;
     if (PAUSABLE_MODES.includes(game.mode)) pauseRace();
   });
   document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      held.clear();
+      clearTouch();
+      drivingView.lookYaw = 0;
+    }
     if (document.hidden && PAUSABLE_MODES.includes(game.mode)) pauseRace();
   });
 
@@ -168,7 +180,8 @@ export function bindInput(): void {
     b.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       sound.init();
-      if (game.mode === 'victory' && game.finishAge > 0.7) continueDriving();
+      if (game.mode === 'victory' && game.finishAge > 0.7 && !control.startsWith('look'))
+        continueDriving();
       try {
         b.setPointerCapture(e.pointerId);
       } catch {

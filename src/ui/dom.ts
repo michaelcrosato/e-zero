@@ -16,6 +16,8 @@ export const el = {
   app: required('app'),
   stage: required('stage'),
   screen: required<HTMLCanvasElement>('screen'),
+  viewSelect: required<HTMLSelectElement>('viewSelect'),
+  cameraButton: required<HTMLButtonElement>('cameraButton'),
   spatialCanvas: required<HTMLCanvasElement>('spatialCanvas'),
   courseSelect: required<HTMLSelectElement>('courseSelect'),
   courseNote: required('courseNote'),

@@ -16,6 +16,7 @@ import { updateBoostFX } from './boost';
 import { updateAutoPilot, updateRace } from './physics';
 import { game, player, sparkParticles } from './state';
 import { fieldSize, updateRemoteCraft } from '../online/state';
+import { updateLook } from '../render/driving-view';
 
 /** HUD refresh interval. 25 Hz is smooth enough for numbers. */
 const HUD_INTERVAL = 0.04;
@@ -25,6 +26,7 @@ const ORBIT_TIME = reducedMotion ? 12 : 7.2;
 const SPARK_GRAVITY = 340;
 
 export function update(dt: number): void {
+  updateLook(dt, reducedMotion);
   updateRemoteCraft(dt);
   // Paused still ticks audio so the engine fades out rather than cutting.
   if (game.mode === 'paused') {

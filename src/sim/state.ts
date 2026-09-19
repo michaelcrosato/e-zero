@@ -116,7 +116,14 @@ export const boostFX = {
 export const held = new Set<string>();
 
 /** Touch control latches. */
-export const touch = { left: false, right: false, boost: false, brake: false };
+export const touch = {
+  left: false,
+  right: false,
+  boost: false,
+  brake: false,
+  lookLeft: false,
+  lookRight: false,
+};
 
 export function setBest(value: number): void {
   game.best = value;

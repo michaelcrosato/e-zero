@@ -71,10 +71,43 @@ Per frame, in order:
 
 ### Two craft representations
 
-`drawCraft` cross-fades between a pre-rendered sprite (used for the whole race
-and every distant rival) and a face-sorted 3D build. The 3D form only appears
-once the finish camera swings off-axis, which is the only time you can see
-anything but the craft's rear.
+Classic's `drawCraft` cross-fades between a pre-rendered rear sprite and a
+face-sorted 3D build. Chase races and distant rivals use sprites. The 3D form
+appears off-axis in the finish orbit, interior views and camera feeds so the
+craft's front and sides are visible from those angles.
+
+### Pilot eye and cockpit
+
+`render/driving-view.ts` is DOM-free camera state and geometry. Each body in
+`config/vehicles.ts` defines mounts in mesh-local lateral / forward / height
+coordinates. `vehiclePose` is shared by the exterior mesh and the mounted cameras;
+`mountCamera` transforms the selected body's mount through that pose. The pilot
+eye does not use a chase distance, boost displacement, orbit blend or screen shake.
+Head yaw changes orientation around that eye, never its position. The keyboard
+and touch look latches are independent of driving input, and are cleared on
+pause, blur and visibility loss. View preference is optional local storage.
+
+Cockpit panels are procedural canvases projected on cabin planes, including
+near-plane clipping and perspective subdivision when looking through the side
+windows. The wheel follows steering and the transparent windshield projection
+uses the same speed conversion as the HUD. Portrait screens use a compact cabin
+layout and a central traffic display without changing the vehicle mount.
+
+`camera-feeds.ts` captures three low-resolution views at 15 Hz, only while the
+cockpit is visible. Skyline reuses its WebGL buffers with independent viewport
+passes. Classic temporarily borrows the raster surface and camera, restoring
+every borrowed field in `finally`. The local craft is excluded from interior and
+camera-feed passes; Classic enables its multi-angle mesh for side/front views.
+`traffic.ts` computes signed lap-relative positions and closure from the active
+AI or human field. Rear video is mirrored; side video and traffic positions use
+the vehicle's left/right, independent of head yaw. These passes never update the
+simulation or consume the shared world RNG.
+
+`window.EZero.view` exposes copies of the view, vehicle pose, mounts, feed update
+counters and nearby contacts. Unit tests cover mounts, alternate vehicle offsets,
+inversions and lap-seam traffic. Browser tests drive both courses, boost, glance,
+resize, pause, resume and restore preferences, with additional WebGL fallback and
+online-field checks. The original Classic physics/world parity suite stays intact.
 
 ## Simulation
 

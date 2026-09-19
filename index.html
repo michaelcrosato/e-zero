@@ -26,6 +26,13 @@
           ><span class="brand-tag">LOW ALTITUDE. HIGH SPEED.</span>
         </div>
         <div class="top-actions">
+          <button
+            class="utility camera-button"
+            id="cameraButton"
+            aria-label="Camera: Chase. Change view (V)"
+          >
+            CHASE · V
+          </button>
           <button class="utility" id="onlineRaceExit" hidden>LEAVE ROOM</button>
           <button class="utility" id="soundButton" aria-label="Turn sound off">
             <span class="sound-dot"></span><span id="soundLabel">SOUND ON</span>
@@ -37,7 +44,7 @@
           id="screen"
           width="768"
           height="432"
-          aria-label="Race view. Use A and D or the arrow keys to steer. Hold Space to boost."
+          aria-label="Race view. Use A and D or the arrow keys to steer. Hold Space to boost. V changes camera. Hold Q or E to look left or right in pilot and cockpit views."
         ></canvas>
         <div class="vignette"></div>
         <div class="crt"></div>
@@ -116,6 +123,15 @@
               </select>
               <p class="course-note" id="courseNote">HILLS · BANKING · VERTICAL LOOP · CORKSCREW</p>
             </div>
+            <div class="view-picker">
+              <label for="viewSelect">DRIVING VIEW</label>
+              <select id="viewSelect">
+                <option value="chase">CHASE · EXTERIOR</option>
+                <option value="pilot">FIRST PERSON · PILOT EYE</option>
+                <option value="cockpit">COCKPIT · IMMERSIVE</option>
+              </select>
+              <p>V changes view · Hold Q / E to look left / right</p>
+            </div>
             <div class="start-row">
               <button class="primary" id="startButton">
                 START RACE <span class="arrow">↗</span></button
@@ -187,7 +203,7 @@
             <h2>RACE PAUSED.</h2>
             <p>
               Steer with A / D or ← / →. Hold Space to boost.<br />Boost uses power. Pink strips
-              restore it.
+              restore it. <br />V changes camera. Hold Q / E to look left / right.
             </p>
             <button class="primary" id="resumeButton">
               RESUME RACE <span class="arrow">↗</span></button
@@ -238,6 +254,14 @@
             or online services.
           </div></noscript
         >
+        <div class="look-controls" aria-label="Look out of the cockpit windows">
+          <button data-control="lookLeft" aria-label="Look left (hold Q)">
+            ◀ LOOK <span>Q</span>
+          </button>
+          <button data-control="lookRight" aria-label="Look right (hold E)">
+            LOOK ▶ <span>E</span>
+          </button>
+        </div>
         <div class="touch-controls" id="touchControls" aria-label="Touch controls">
           <div class="touch-steer">
             <button class="touch-button" data-control="left" aria-label="Steer left">◀</button
@@ -258,6 +282,7 @@
           <div class="control"><kbd>↓</kbd> BRAKE</div>
           <div class="control"><kbd>R</kbd> RESTART</div>
           <div class="control"><kbd>ESC</kbd> PAUSE</div>
+          <div class="control"><kbd>V</kbd> VIEW</div>
         </div>
         <div class="footer-note">
           <span>A SMALL GAME ABOUT GOING VERY FAST.</span><br />ORIGINAL ART · SYNTHESIZED AUDIO ·

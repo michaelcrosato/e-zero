@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/michaelcrosato/e-zero/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelcrosato/e-zero/actions/workflows/ci.yml)
 
-**[Play it →](https://e-zero.vercel.app)**
+**[Play it →](https://e-zero-phvn.vercel.app)**
 
 A 100-racer, three-lap anti-gravity racer with private online races for 2–4 friends.
 No image assets or game engine — the track, the city, the craft

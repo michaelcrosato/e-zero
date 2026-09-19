@@ -24,17 +24,22 @@ test('starts in nine lanes and drives all twelve section-specific widths over a 
   expect(await driveCentreLine(page, 215)).toBeGreaterThan(215);
   expect(await page.evaluate(() => window.EZero.stats.railHits)).toBe(0);
   for (const part of start.sections) {
-    const at = part.start + (part.end - part.start) * (part.index <= 6 ? 0.97 : 0.6);
-    await page.waitForFunction(
-      ({ index, at }) =>
-        window.EZero.stats.sectionIndex === index &&
-        window.EZero.stats.progress * window.EZero.stats.trackLength >= at,
+    // Sample after the merge settles, with enough road left for a slow CI frame.
+    const fraction = part.index === 1 ? 0.97 : part.index <= 6 ? 0.9 : 0.6;
+    const at = part.start + (part.end - part.start) * fraction;
+    const snapshot = await page.waitForFunction(
+      ({ index, at }) => {
+        const stats = window.EZero.stats;
+        if (stats.sectionIndex !== index || stats.progress * stats.trackLength < at) return null;
+        // Capture in the matching tick; a second browser call can reach the next section.
+        return { stats, field: window.EZero.field };
+      },
       { index: part.index, at },
     );
-    const state = await page.evaluate(() => ({
-      stats: window.EZero.stats,
-      field: window.EZero.field,
-    }));
+    const state = await snapshot.jsonValue();
+    await snapshot.dispose();
+    if (!state) throw new Error('Section snapshot was not captured');
+    expect(state.stats.sectionIndex).toBe(part.index);
     expect(state.stats.lanes).toBe(part.lanes);
     expect(state.stats.halfWidth).toBeCloseTo((98 * part.lanes) / 3, 6);
     expect(state.stats.railHits).toBe(0);

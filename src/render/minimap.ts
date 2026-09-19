@@ -9,7 +9,9 @@ import { TAU } from '../config/constants';
 import { mod } from '../core/math';
 import { rivals } from '../sim/rivals';
 import { player } from '../sim/state';
-import { N, sample, total, track } from '../track/spline';
+import { total, track } from '../track/spline';
+import { course, sampleCourse as sample } from '../track/course';
+import { skyline } from '../track/spatial';
 import { el } from '../ui/dom';
 import { shipPalettes } from './palettes';
 import { polygon } from './sprites';
@@ -20,17 +22,24 @@ const MAP_H = 208;
 
 const mapCtx = el.minimap.getContext('2d');
 
-const bounds = track.reduce(
-  (b, p) => ({
-    minX: Math.min(b.minX, p.x),
-    maxX: Math.max(b.maxX, p.x),
-    minY: Math.min(b.minY, p.y),
-    maxY: Math.max(b.maxY, p.y),
-  }),
-  { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
-);
+const boundsFor = (points: ReadonlyArray<{ x: number; y: number }>) =>
+  points.reduce(
+    (b, p) => ({
+      minX: Math.min(b.minX, p.x),
+      maxX: Math.max(b.maxX, p.x),
+      minY: Math.min(b.minY, p.y),
+      maxY: Math.max(b.maxY, p.y),
+    }),
+    { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+  );
+
+const classicBounds = boundsFor(track);
+const spatialBounds = boundsFor(skyline.frames);
 
 export function drawMinimap(): void {
+  const points = course.id === 'skyline' ? skyline.frames : track;
+  const N = points.length;
+  const bounds = course.id === 'skyline' ? spatialBounds : classicBounds;
   const c = mapCtx;
   if (!c) return;
   c.clearRect(0, 0, MAP_W, MAP_H);
@@ -47,7 +56,7 @@ export function drawMinimap(): void {
   // Course outline: a dark casing stroke under a lighter road stroke.
   c.beginPath();
   for (let i = 0; i < N; i += 7) {
-    const p = track[i];
+    const p = points[i];
     if (i) c.lineTo(toX(p.x), toY(p.y));
     else c.moveTo(toX(p.x), toY(p.y));
   }
@@ -63,7 +72,7 @@ export function drawMinimap(): void {
   const end = Math.floor((mod(player.s, total) / total) * N);
   c.beginPath();
   for (let i = 0; i < end; i += 5) {
-    const p = track[i];
+    const p = points[i];
     if (i) c.lineTo(toX(p.x), toY(p.y));
     else c.moveTo(toX(p.x), toY(p.y));
   }

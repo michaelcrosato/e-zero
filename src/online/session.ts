@@ -1,3 +1,4 @@
+import { course, type CourseId } from '../track/course';
 import type { DataConnection, Peer, PeerOptions } from 'peerjs';
 import { PROTOCOL, ROOM_PATTERN, parseMessage, type Message, type Motion } from './protocol';
 import { Room } from './room';
@@ -19,6 +20,7 @@ interface Hooks {
   left(): void;
   motion(): Omit<Motion, 'seq' | 'finishedAt'> & { finishedAt: number | null };
   countdown(delay: number): void;
+  course(id: CourseId): boolean;
 }
 
 /** Only the host accepts members, starts rounds and publishes the roster. */
@@ -77,7 +79,7 @@ export class Session {
         if (this.connected) return;
         online.id = id;
         if (!code) {
-          this.room = new Room(id, name);
+          this.room = new Room(id, name, course.id);
           this.connected = true;
           this.publish();
           this.hooks.status('Share the room code. Start when everyone is ready.');
@@ -206,6 +208,10 @@ export class Session {
       this.hooks.changed();
     }
     if (message.type === 'room') {
+      if (course.id !== message.course && !this.hooks.course(message.course)) {
+        this.fail('This room requires 3D graphics. Enable WebGL or join a Classic room.');
+        return;
+      }
       if (!message.racers.some((r) => r.id === online.id) || message.round < online.round) return;
       const backToLobby = online.racing && message.phase === 'lobby';
       this.connected = true;
@@ -318,7 +324,13 @@ export class Session {
     online.racers = this.room.racers.map((r) => ({ ...r }));
     for (const { connection, joined } of this.links.values())
       if (joined)
-        this.send(connection, { type: 'start', round: this.room.round, at, racers: online.racers });
+        this.send(connection, {
+          type: 'start',
+          round: this.room.round,
+          at,
+          racers: online.racers,
+          course: this.room.course,
+        });
     this.begin(at);
     this.publish();
   }

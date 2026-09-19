@@ -16,6 +16,13 @@ export const el = {
   app: required('app'),
   stage: required('stage'),
   screen: required<HTMLCanvasElement>('screen'),
+  spatialCanvas: required<HTMLCanvasElement>('spatialCanvas'),
+  courseSelect: required<HTMLSelectElement>('courseSelect'),
+  courseNote: required('courseNote'),
+  courseLabel: required('courseLabel'),
+  trackFeature: required('trackFeature'),
+  mapTitle: required('mapTitle'),
+  onlineCourse: required('onlineCourse'),
   minimap: required<HTMLCanvasElement>('minimap'),
 
   hud: required('hud'),

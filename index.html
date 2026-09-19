@@ -51,6 +51,7 @@
                 <span id="positionValue">100</span><small id="fieldSize">/ 100</small>
               </div>
               <div class="field-status" id="fieldStatus">START / LAST PLACE</div>
+              <div class="track-feature" id="trackFeature"></div>
             </div>
             <div>
               <div class="power-header">
@@ -74,7 +75,7 @@
           </button>
           <div class="hud-bottom">
             <div class="map-panel">
-              <div class="map-title">NEON HARBOR / 01</div>
+              <div class="map-title" id="mapTitle">SKYLINE CIRCUIT / 02</div>
               <canvas id="minimap" width="264" height="208" aria-label="Course map"></canvas>
               <div class="map-caption" id="distanceLabel">0% COMPLETE</div>
             </div>
@@ -107,6 +108,14 @@
             <p class="intro">
               Start in 100th. Pass 99 rivals.<br />Three laps. Hold boost. Take the lead.
             </p>
+            <div class="course-picker">
+              <label for="courseSelect">CIRCUIT</label>
+              <select id="courseSelect">
+                <option value="skyline">SKYLINE · 3D STUNT CIRCUIT</option>
+                <option value="classic">NEON HARBOR · CLASSIC</option>
+              </select>
+              <p class="course-note" id="courseNote">HILLS · BANKING · VERTICAL LOOP · CORKSCREW</p>
+            </div>
             <div class="start-row">
               <button class="primary" id="startButton">
                 START RACE <span class="arrow">↗</span></button
@@ -120,7 +129,9 @@
             <button class="online-entry" id="onlineButton">PLAY ONLINE · 2–4 PLAYERS ↗</button>
           </div>
           <div class="live-tag"><i></i> 100 ON TRACK / 006</div>
-          <div class="track-label"><b>NEON HARBOR</b><span>AFTER DARK. ABOVE WATER.</span></div>
+          <div class="track-label">
+            <b id="courseLabel">SKYLINE CIRCUIT</b><span>AFTER DARK. ABOVE WATER.</span>
+          </div>
         </div>
         <div
           class="overlay online-overlay hidden"
@@ -152,6 +163,7 @@
                 <span class="online-room-code" id="onlineCode"></span>
                 <button class="secondary" id="onlineCopy">COPY INVITE LINK</button>
               </div>
+              <p id="onlineCourse"></p>
               <p id="onlineCount">1 / 4 PLAYERS</p>
               <ol class="online-roster" id="onlineRoster" aria-label="Players and standings"></ol>
               <button class="primary" id="onlineReady">READY</button>
@@ -261,6 +273,7 @@
       required: the engine and effects are synthesised with Web Audio.
     -->
     <audio id="raceMusic" preload="auto" loop playsinline hidden aria-hidden="true"></audio>
+    <canvas id="spatialCanvas" hidden aria-hidden="true"></canvas>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

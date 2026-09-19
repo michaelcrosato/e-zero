@@ -1,5 +1,6 @@
 /** Small, versioned messages; never trust objects received from another browser. */
-export const PROTOCOL = 1;
+import { isCourse, type CourseId } from '../track/course';
+export const PROTOCOL = 2;
 export const MAX_PLAYERS = 4;
 export const ROOM_PATTERN = /^[A-Z2-9]{8}$/;
 
@@ -26,8 +27,8 @@ export type Message =
   | { type: 'ping'; sent: number }
   | { type: 'pong'; sent: number; hostTime: number }
   | { type: 'state'; round: number; motion: Motion }
-  | { type: 'room'; phase: Phase; round: number; racers: Racer[] }
-  | { type: 'start'; round: number; at: number; racers: Racer[] }
+  | { type: 'room'; phase: Phase; round: number; racers: Racer[]; course: CourseId }
+  | { type: 'start'; round: number; at: number; racers: Racer[]; course: CourseId }
   | { type: 'reject'; reason: string };
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -99,12 +100,18 @@ export function parseMessage(value: unknown): Message | null {
       if (
         (value.phase === 'lobby' || value.phase === 'racing' || value.phase === 'finished') &&
         integer(value.round) &&
-        isRoster(value.racers)
+        isRoster(value.racers) &&
+        isCourse(value.course)
       )
         return value as Message;
       break;
     case 'start':
-      if (integer(value.round) && bounded(value.at, 0, 1e12) && isRoster(value.racers))
+      if (
+        integer(value.round) &&
+        bounded(value.at, 0, 1e12) &&
+        isRoster(value.racers) &&
+        isCourse(value.course)
+      )
         return value as Message;
       break;
     case 'reject':

@@ -59,7 +59,8 @@ async function waitForBoot(page: Page): Promise<void> {
 /** Loads the refactored build from the preview server. */
 async function openRefactor(page: Page): Promise<void> {
   await page.bringToFront();
-  await page.goto('/');
+  // Skyline deliberately adds 3D geometry and slope forces. Preserve every original assertion on Classic.
+  await page.goto('/?course=classic');
   await waitForBoot(page);
 }
 

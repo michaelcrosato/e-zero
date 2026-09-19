@@ -15,7 +15,10 @@ import { surface } from './render/surface';
 import { rivals } from './sim/rivals';
 import { boostFX, game, player } from './sim/state';
 import { BASE, MAX, RACE_DISTANCE, widthAt } from './track/layout';
-import { sample, total } from './track/spline';
+import { total } from './track/spline';
+import { course, sampleCourse as sample, lateralDrift, gradeAcceleration } from './track/course';
+import { sectionAt, skyline } from './track/spatial';
+import { spatialView } from './render/spatial-renderer';
 import { viewport } from './ui/viewport';
 import { fieldSize, online, remoteCraft } from './online/state';
 
@@ -26,7 +29,17 @@ function createApi(loop: LoopHandle) {
     },
 
     get stats() {
+      const frame = sample(player.s, player.x);
       return {
+        course: course.id,
+        elevation: frame.z,
+        forward: { ...frame.forward },
+        up: { ...frame.up },
+        right: { ...frame.right },
+        bank: frame.bank,
+        lateralDrift: lateralDrift(frame, player.v),
+        gradeAcceleration: course.id === 'skyline' ? gradeAcceleration(frame) : 0,
+        section: course.id === 'skyline' ? sectionAt(player.s).name : 'Neon Harbor',
         time: game.raceTime,
         freeLapTime: game.freeLapTime,
         progress: player.s / total,
@@ -112,6 +125,22 @@ function createApi(loop: LoopHandle) {
         contextState: sound.context?.state || 'unavailable',
         musicGain: sound.musicGainValue,
         error: sound.musicError,
+      };
+    },
+
+    get course() {
+      return {
+        id: course.id,
+        graphicsReady: spatialView.ready,
+        graphicsLost: spatialView.lost,
+        camera: {
+          forward: { ...spatialView.forward },
+          up: { ...spatialView.up },
+          right: { ...spatialView.right },
+          eye: { ...spatialView.eye },
+        },
+        drawnCraft: spatialView.drawnCraft,
+        sections: skyline.sections.map((part) => ({ ...part })),
       };
     },
 

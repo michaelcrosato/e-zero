@@ -15,7 +15,10 @@ import { sound } from '../audio/sound';
 import { project } from '../render/project';
 import { surface } from '../render/surface';
 import { BASE, MAX, RACE_DISTANCE, pads, repair, repairX, widthAt } from '../track/layout';
-import { sample, total } from '../track/spline';
+import { total } from '../track/spline';
+import { course, sampleCourse as sample, gradeAcceleration, lateralDrift } from '../track/course';
+import { projectSpatial } from '../render/spatial-renderer';
+import { offset } from '../core/vector';
 import { announce } from '../ui/announce';
 import { showMessage } from '../ui/hud';
 import { el } from '../ui/dom';
@@ -65,7 +68,7 @@ export function hitRail(side: number, limit: number): void {
   sound.hit();
 
   const p = sample(player.s, player.x + side * 15);
-  const pr = project(p.x, p.y, 5);
+  const pr = course.id === 'skyline' ? projectSpatial(offset(p, 0, 5)) : project(p.x, p.y, 5);
   const { w: W, h: H } = surface;
   spawnSparks(
     pr ? clamp(pr.x, 25, W - 25) : W / 2 + side * 190,
@@ -141,11 +144,13 @@ export function updateRace(dt: number, free = false): void {
   const target = input.brake ? BASE * 0.53 : player.boosting ? MAX : BASE;
   const acceleration = input.brake ? 7.0 : player.boosting ? 9.2 : target > player.v ? 4.2 : 2.55;
   player.v = lerp(player.v, target, 1 - Math.exp(-dt * acceleration));
+  if (course.id === 'skyline')
+    player.v = clamp(player.v + gradeAcceleration(p) * dt, 0, MAX * 1.12);
   player.power = clamp(player.power + (boost ? -14.5 : 3.3) * dt, 0, 100);
 
   player.steer = lerp(player.steer, input.steer, 1 - Math.exp(-dt * 12));
   // Cornering throws the craft outward, and harder the faster you go.
-  const drift = clamp(-p.curve * player.v * player.v * 0.1, -195, 195);
+  const drift = lateralDrift(p, player.v);
   const authority = player.bounceTime > 0 ? 0.24 : 1;
   const wanted = input.steer * (225 + (player.v / BASE) * 78) * authority + drift;
   player.latV = lerp(player.latV, wanted, 1 - Math.exp(-dt * 10));

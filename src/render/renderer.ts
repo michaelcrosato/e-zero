@@ -18,6 +18,8 @@ import { drawObjects } from './props';
 import { drawSky } from './sky';
 import { drawSpeed } from './speedlines';
 import { surface } from './surface';
+import { course } from '../track/course';
+import { drawSpatial } from './spatial-renderer';
 
 /** Seconds for the finish camera to complete its orbit. */
 const ORBIT_TIME = 7.2;
@@ -76,9 +78,12 @@ export function render(): void {
   const hyper = demo || reducedMotion ? 0 : boostFX.amount;
   const kick = demo || reducedMotion ? 0 : boostFX.burst;
 
-  drawSky();
-  drawGround();
-  drawObjects(demo);
+  if (course.id === 'skyline') drawSpatial(demo);
+  else {
+    drawSky();
+    drawGround();
+    drawObjects(demo);
+  }
   drawSpeed();
   drawBoostFX(demo);
 

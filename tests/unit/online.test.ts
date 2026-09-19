@@ -19,6 +19,16 @@ const motion = (seq: number, s = 100): Motion => ({
 });
 
 describe('private online rooms', () => {
+  it('publishes the host course and rejects unknown course identifiers', () => {
+    const room = new Room('host', 'Host', 'skyline');
+    expect(room.message()).toMatchObject({ course: 'skyline' });
+    expect(parseMessage(room.message())?.type).toBe('room');
+    expect(parseMessage({ ...room.message(), course: 'unknown' })).toBeNull();
+    expect(
+      parseMessage({ type: 'start', at: 123, round: 1, racers: room.racers, course: 'skyline' })
+        ?.type,
+    ).toBe('start');
+  });
   it('admits four players, requires readiness and rejects late joiners', () => {
     const room = new Room('host', 'Host');
     expect(room.start()).toBe(false);

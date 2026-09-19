@@ -10,6 +10,7 @@ import { FIELD_SIZE } from '../config/constants';
 import { clamp, lerp, mod } from '../core/math';
 import { BASE, RACE_DISTANCE, widthAt } from '../track/layout';
 import { total } from '../track/spline';
+import { course, sampleCourse, gradeAcceleration } from '../track/course';
 import { shipPalettes } from '../render/palettes';
 import { game, player } from './state';
 import type { Rival } from './types';
@@ -193,6 +194,7 @@ export function updateRivals(dt: number): void {
 
     const targetV = BASE * r.pace * pulse * (r.boosting ? r.boostRatio : 1) * r.traffic;
     r.v = lerp(r.v, targetV, 1 - Math.exp(-dt * (targetV < r.v ? 5 : r.acceleration)));
+    if (course.id === 'skyline') r.v = Math.max(0, r.v + gradeAcceleration(sampleCourse(r.s)) * dt);
     r.s += r.v * dt;
 
     // Interpolate the exact crossing time so finish order is not step-quantised.

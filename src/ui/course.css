@@ -1,0 +1,90 @@
+.course-picker {
+  margin: 16px 0 14px;
+  max-width: 340px;
+}
+.course-picker label {
+  display: block;
+  color: #b8cfdf;
+  font:
+    10px 'Courier New',
+    monospace;
+  letter-spacing: 2px;
+  margin-bottom: 7px;
+}
+.course-picker select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #73c9d780;
+  background: #0b192c;
+  color: #eafaff;
+  font:
+    700 13px 'Courier New',
+    monospace;
+  pointer-events: auto;
+  border-radius: 0;
+}
+.course-picker select:focus-visible {
+  outline: 2px solid #8ffff0;
+}
+.course-note {
+  color: #8fb2c7;
+  font:
+    9px/1.5 'Courier New',
+    monospace;
+  margin: 7px 0 0;
+  letter-spacing: 0.4px;
+}
+.track-feature {
+  margin-top: 10px;
+  color: #c1f8ec;
+  font:
+    10px/1.6 'Courier New',
+    monospace;
+  letter-spacing: 1px;
+  text-shadow: 1px 2px #081321;
+  white-space: pre-line;
+}
+@media (max-height: 650px) and (min-aspect-ratio: 1/1) {
+  .course-picker {
+    margin: 8px 0;
+    max-width: 300px;
+  }
+  .course-picker label,
+  .course-note {
+    font-size: 8px;
+    margin-bottom: 3px;
+  }
+  .course-picker select {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+  .title-content .title-stats {
+    margin-top: 12px;
+  }
+  .title-content .game-title {
+    margin-bottom: 9px;
+  }
+  .title-content .intro {
+    margin-bottom: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .track-feature {
+    font-size: 8px;
+    letter-spacing: 0.3px;
+    max-width: 170px;
+  }
+  .course-picker {
+    max-width: 300px;
+  }
+}
+
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  .title-content > .eyebrow,
+  .title-content .title-stats {
+    display: none;
+  }
+  .title-content .game-title {
+    font-size: 64px;
+  }
+}

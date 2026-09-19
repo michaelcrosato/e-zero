@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { driveCentreLine } from './driver';
 
 async function racer(
   browser: Browser,
@@ -8,6 +9,7 @@ async function racer(
   const context = await browser.newContext({ baseURL, viewport: { width: 600, height: 400 } });
   const page = await context.newPage();
   await page.goto('/');
+  if (name === 'Ada') await page.locator('#courseSelect').selectOption('classic');
   await page.locator('#onlineButton').click();
   await page.locator('#onlineName').fill(name);
   return { page, context };
@@ -66,31 +68,11 @@ test('four real WebRTC peers race, reject a fifth, finish together and rematch',
     });
     await fifth.close();
 
-    // Drive through actual keyboard input, using the public read-only telemetry to hold the line.
-    for (const page of pages)
-      await page.evaluate(() => {
-        const held = new Set<string>();
-        const timer = window.setInterval(() => {
-          if (window.EZero.state !== 'race') {
-            window.clearInterval(timer);
-            return;
-          }
-          const stats = window.EZero.stats;
-          const drift = Math.max(-195, Math.min(195, -stats.curve * stats.worldSpeed ** 2 * 0.1));
-          const desired = -stats.lateral * 4 - drift;
-          const key = desired > 18 ? 'ArrowRight' : desired < -18 ? 'ArrowLeft' : '';
-          for (const code of ['ArrowLeft', 'ArrowRight']) {
-            if (code === key && !held.has(code)) {
-              window.dispatchEvent(new KeyboardEvent('keydown', { code }));
-              held.add(code);
-            }
-            if (code !== key && held.has(code)) {
-              window.dispatchEvent(new KeyboardEvent('keyup', { code }));
-              held.delete(code);
-            }
-          }
-        }, 40);
-      });
+    for (const page of pages) {
+      expect(await page.evaluate(() => window.EZero.stats.course)).toBe('skyline');
+      expect(await page.evaluate(() => window.EZero.course.graphicsReady)).toBe(true);
+      await driveCentreLine(page);
+    }
     await host.waitForFunction(() => window.EZero.online.racers.every((r) => r.s > 500), null, {
       timeout: 20_000,
     });

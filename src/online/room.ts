@@ -8,13 +8,19 @@ import {
   type Racer,
 } from './protocol';
 
+import type { CourseId } from '../track/course';
+
 /** Host-owned membership and race lifecycle, independent of the transport. */
 export class Room {
   phase: Phase = 'lobby';
   round = 0;
   racers: Racer[];
 
-  constructor(id: string, name: string) {
+  constructor(
+    id: string,
+    name: string,
+    readonly course: CourseId = 'classic',
+  ) {
     this.racers = [newRacer(id, name, 0)];
   }
 
@@ -97,6 +103,7 @@ export class Room {
   message(): Message {
     return {
       type: 'room',
+      course: this.course,
       phase: this.phase,
       round: this.round,
       racers: this.racers.map((r) => ({ ...r })),

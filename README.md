@@ -4,10 +4,16 @@
 
 **[Play it →](https://e-zero-phvn.vercel.app)**
 
+The default **Skyline Circuit** has real hills, banked turns, a vertical loop and
+a corkscrew. The craft and chase camera follow the road through all three axes;
+magnetic adhesion keeps you attached upside down. Choose **Neon Harbor · Classic**
+in the circuit selector to race the original flat course.
+
 A 100-racer, three-lap anti-gravity racer with private online races for 2–4 friends.
 No image assets or game engine — the track, the city, the craft
-and the sky are all generated in code at load time and drawn to a 2D canvas with
-a Mode 7 style per-pixel ground renderer.
+and the sky are all generated in code at load time. Skyline uses a small WebGL
+renderer with depth-tested road and craft geometry; Classic retains the original
+Mode 7 per-pixel renderer. Neither needs a game engine or image assets.
 
 You start **100th of 100**. Three laps. Boost costs power, rails cost you the
 line, and the pink strip gives power back.
@@ -51,6 +57,17 @@ return to the room screen with a retry message. See [multiplayer details](docs/M
 for deployment options, networking limits and browser checks.
 
 ## How it works
+
+Skyline's centre line is resampled by **3D arc length**. Each sample stores forward,
+right and up vectors, so road width, rails, craft, camera and steering rotate
+together through vertical and inverted track. Climbs reduce speed, descents add
+speed, and banking changes lateral drift. The course selector keeps best times
+separate. Multiplayer rooms use the host's circuit automatically.
+
+See [3D track authoring](docs/TRACKS.md) for the reusable hill, bank, loop and
+corkscrew primitives and their tests.
+
+### Classic renderer
 
 The ground is not geometry. Every frame, each scanline below the horizon is a
 constant distance from the camera, so the renderer walks that row through a
@@ -122,7 +139,8 @@ works: `pnpm build` and serve `dist/`.
 ## Provenance
 
 This repository is an unpacking of a single 5.9 MB HTML file into a typed,
-tested, modular project. Nothing about how the game plays was redesigned. See
+tested, modular project. Classic preserves the original gameplay; Skyline adds
+the 3D course described above. See
 [`docs/PROVENANCE.md`](docs/PROVENANCE.md).
 
 ## Licence

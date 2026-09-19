@@ -7,6 +7,7 @@
  */
 import { BEST_KEY, FIELD_SIZE, SKY_H } from '../config/constants';
 import { total } from '../track/spline';
+import { course } from '../track/course';
 import type { BoostParticle, Camera, LapResult, Mode, Player, Spark } from './types';
 
 export function createPlayer(): Player {
@@ -29,9 +30,13 @@ export function createPlayer(): Player {
   };
 }
 
-function loadBest(): number {
+function bestKey(): string {
+  return course.id === 'classic' ? BEST_KEY : BEST_KEY + '-skyline-v1';
+}
+
+export function loadBest(): number {
   try {
-    return Number(localStorage.getItem(BEST_KEY)) || 0;
+    return Number(localStorage.getItem(bestKey())) || 0;
   } catch {
     // Private browsing and blocked storage are not errors; there is just no best.
     return 0;
@@ -116,7 +121,7 @@ export const touch = { left: false, right: false, boost: false, brake: false };
 export function setBest(value: number): void {
   game.best = value;
   try {
-    localStorage.setItem(BEST_KEY, String(value));
+    localStorage.setItem(bestKey(), String(value));
   } catch {
     // A best time that cannot be persisted is still valid for this session.
   }

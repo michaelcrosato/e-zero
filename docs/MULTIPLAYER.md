@@ -4,7 +4,14 @@ Create a private room from **PLAY ONLINE**, share its link or code, and have eac
 guest press **READY**. The host starts once 2–4 players are ready. The same course,
 boost, rails, repair strip, and three-lap finish apply. Online races contain human
 racers only. Craft are non-contact so network delay cannot cause unfair collision
-impulses. Solo physics and the 99-rival field are unchanged.
+impulses. Classic solo physics and the 99-rival field are unchanged.
+
+Choose a circuit before creating the room. Skyline includes hills, banking, loops
+and a corkscrew; Classic is the original flat track. The host's choice is shown in
+the lobby and synchronized to guests. The network protocol version is now 2;
+older builds receive a refresh/version message instead of joining an incompatible
+race. Remote craft reconstruct their full 3D orientation from the shared course
+and distance, so no independent Euler rotations can drift between clients.
 
 ## Connection and race lifecycle
 

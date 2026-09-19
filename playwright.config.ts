@@ -30,6 +30,8 @@ export default defineConfig({
             '--disable-background-timer-throttling',
             '--disable-renderer-backgrounding',
             '--disable-backgrounding-occluded-windows',
+            // CI uses a software GPU; still exercise the real depth-tested WebGL renderer.
+            '--enable-unsafe-swiftshader',
           ],
         },
       },

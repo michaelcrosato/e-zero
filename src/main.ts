@@ -22,6 +22,7 @@ import { el } from './ui/dom';
 import { refreshBest } from './ui/hud';
 import { bindInput } from './ui/input';
 import { bindOnline } from './ui/online';
+import { bindCourse } from './ui/course';
 import { bindViewport, resizeViewport } from './ui/viewport';
 
 function boot(): void {
@@ -35,6 +36,7 @@ function boot(): void {
   // 3. Wire the DOM.
   bindViewport();
   bindInput();
+  bindCourse();
   refreshBest();
 
   // 4. First frame.

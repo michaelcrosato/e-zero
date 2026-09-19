@@ -13,6 +13,8 @@ import { boostFX, game, player } from '../sim/state';
 import { BASE, RACE_DISTANCE } from '../track/layout';
 import { KMH } from '../config/constants';
 import { total } from '../track/spline';
+import { course, sampleCourse } from '../track/course';
+import { sectionAt } from '../track/spatial';
 import { boostTouchButton, el } from './dom';
 
 export function refreshBest(): void {
@@ -32,6 +34,15 @@ export function hideMessage(): void {
 
 export function updateHUD(): void {
   const count = fieldSize();
+  const frame = sampleCourse(player.s);
+  el.trackFeature.hidden = course.id !== 'skyline';
+  if (course.id === 'skyline')
+    el.trackFeature.textContent =
+      sectionAt(player.s).name.toUpperCase() +
+      '\n' +
+      (frame.up.z < -0.25
+        ? 'INVERTED · MAGNETIC GRIP'
+        : 'ALT ' + Math.round(frame.z) + ' · GRADE ' + Math.round(frame.forward.z * 100) + '%');
   if (online.racing && game.lapResult) game.lapResult.position = onlinePosition();
   const free = game.mode === 'free' || (game.mode === 'paused' && game.pausedMode === 'free');
   const post = !!game.lapResult && !game.lapResult.failed;

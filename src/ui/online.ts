@@ -9,6 +9,8 @@ import { shipPalettes } from '../render/palettes';
 import { game, player } from '../sim/state';
 import { total } from '../track/spline';
 import { el } from './dom';
+import { selectCourse } from './course';
+import { course, courseNames } from '../track/course';
 
 const ui = { open: false, roster: '' };
 
@@ -62,6 +64,7 @@ function refresh(): void {
       : 'FINISH LINE'
     : 'ONLINE RACE';
   el.onlineCode.textContent = online.code;
+  el.onlineCourse.textContent = courseNames[course.id];
   el.onlineInvite.hidden = online.racing;
   el.onlineReady.hidden = online.host || online.racing;
   el.onlineReady.disabled = !session.canReady;
@@ -83,6 +86,7 @@ function refresh(): void {
 }
 
 const session = new Session({
+  course: selectCourse,
   changed: refresh,
   status: (message) => {
     el.onlineStatus.textContent = message;
@@ -156,6 +160,7 @@ export function bindOnline(): void {
   el.onlineCopy.addEventListener('click', () => {
     const url = new URL(location.href);
     url.searchParams.set('room', online.code);
+    url.searchParams.set('course', course.id);
     if (!navigator.clipboard) {
       el.onlineStatus.textContent = 'Share this room code: ' + online.code;
       return;

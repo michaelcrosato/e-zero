@@ -47,6 +47,13 @@ module observes the same object.
 
 ## The render pipeline
 
+The course selector chooses between two renderers. **Skyline** uses a raw WebGL
+mesh renderer (`render/spatial-renderer.ts`, `render/spatial-mesh.ts`) with depth
+testing, a full 3D camera and procedural scenery. It copies the rendered image to
+the existing scene canvas before HUD effects and final blitting. **Classic** uses
+the unchanged Mode 7 path below. See [`TRACKS.md`](TRACKS.md) for geometry, course
+authoring, track-relative forces, multiplayer synchronization and verification.
+
 Per frame, in order:
 
 1. **`solveCamera`** — position, height, focal length and horizon, blended
@@ -70,6 +77,14 @@ once the finish camera swings off-axis, which is the only time you can see
 anything but the craft's rear.
 
 ## Simulation
+
+The active course is held in `track/course.ts`. `sampleCourse` returns a 3D road
+frame; Classic delegates its position and curvature to the original sampler.
+Skyline resolves gravity along and across the road, while magnetic adhesion holds
+craft to its normal through loops and corkscrews. Both courses use the same lap
+length; Skyline achieves that through uniform world scaling after measuring its
+3D arc length. Course selection changes best-time storage, never cumulative `s`
+or lap accounting. Online room messages carry the host's validated course ID.
 
 Fixed 120 Hz step (`FIXED_STEP`), accumulated against wall time and capped at
 `MAX_STEPS_PER_FRAME` so a backgrounded tab resumes rather than trying to

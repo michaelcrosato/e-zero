@@ -1,6 +1,7 @@
 import { offset, vec, type Frame3, type Vec3 } from '../core/vector';
 import { mod } from '../core/math';
-import { pads, repair, repairX, widthAt } from '../track/layout';
+import { pads, repair } from '../track/layout';
+import { skylineWidthAt as widthAt, skylineDividerAt } from '../track/launch';
 import { sampleSpatial, skyline } from '../track/spatial';
 import { total } from '../track/spline';
 
@@ -97,18 +98,14 @@ export function roadMesh(): Float32Array {
         15,
         side === 1 ? [0.28, 0.95, 0.91] : [0.93, 0.38, 0.72],
       );
-      if (Math.floor(s / 95) % 2 === 0)
-        ribbon(
-          mesh,
-          a,
-          b,
-          side * wa * 0.33 - 1.5,
-          side * wa * 0.33 + 1.5,
-          side * wb * 0.33 - 1.5,
-          side * wb * 0.33 + 1.5,
-          0.6,
-          [0.55, 0.7, 0.76],
-        );
+    }
+    if (Math.floor(s / 95) % 2 === 0) {
+      for (let divider = 0; divider < 5; divider++) {
+        const x = skylineDividerAt(s, divider);
+        const nx = skylineDividerAt(next, divider);
+        if (x === null || nx === null) continue;
+        ribbon(mesh, a, b, x - 1.5, x + 1.5, nx - 1.5, nx + 1.5, 0.6, [0.55, 0.7, 0.76]);
+      }
     }
     for (const pad of pads) {
       const ds = mod(s - pad.s + total / 2, total) - total / 2;
@@ -116,17 +113,7 @@ export function roadMesh(): Float32Array {
         ribbon(mesh, a, b, pad.x - 24, pad.x + 24, pad.x - 24, pad.x + 24, 1, [0.14, 0.8, 1]);
     }
     if (s > repair.s && s < repair.s + repair.len)
-      ribbon(
-        mesh,
-        a,
-        b,
-        repairX(s) - 25,
-        repairX(s) + 25,
-        repairX(next) - 25,
-        repairX(next) + 25,
-        1,
-        [1, 0.22, 0.58],
-      );
+      ribbon(mesh, a, b, -wa + 14, -wa + 64, -wb + 14, -wb + 64, 1, [1, 0.22, 0.58]);
     if (s < 24) {
       for (let j = 0; j < 12; j++)
         ribbon(

@@ -5,7 +5,7 @@
  * module observes the same values without relying on live-binding semantics,
  * and so a reset can rewrite the world in place without swapping references.
  */
-import { BEST_KEY, FIELD_SIZE, SKY_H } from '../config/constants';
+import { BEST_KEY, FIELD_SIZE, HALF, SKY_H } from '../config/constants';
 import { total } from '../track/spline';
 import { course } from '../track/course';
 import type { BoostParticle, Camera, LapResult, Mode, Player, Spark } from './types';
@@ -13,7 +13,7 @@ import type { BoostParticle, Camera, LapResult, Mode, Player, Spark } from './ty
 export function createPlayer(): Player {
   return {
     s: 0,
-    x: 0,
+    x: course.id === 'skyline' ? -HALF / 3 : 0,
     v: 0,
     latV: 0,
     kickV: 0,
@@ -31,7 +31,7 @@ export function createPlayer(): Player {
 }
 
 function bestKey(): string {
-  return course.id === 'classic' ? BEST_KEY : BEST_KEY + '-skyline-v1';
+  return course.id === 'classic' ? BEST_KEY : BEST_KEY + '-skyline-v2';
 }
 
 export function loadBest(): number {

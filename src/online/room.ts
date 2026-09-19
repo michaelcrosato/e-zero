@@ -21,7 +21,7 @@ export class Room {
     name: string,
     readonly course: CourseId = 'classic',
   ) {
-    this.racers = [newRacer(id, name, 0)];
+    this.racers = [newRacer(id, name, 0, this.course)];
   }
 
   join(id: string, name: string, version: number): string | null {
@@ -31,7 +31,7 @@ export class Room {
     if (this.racers.some((r) => r.id === id)) return 'Already connected to this room.';
     const slot = [0, 1, 2, 3].find((s) => !this.racers.some((r) => r.slot === s));
     if (slot === undefined) return 'Room is full (4 players).';
-    this.racers.push(newRacer(id, name, slot));
+    this.racers.push(newRacer(id, name, slot, this.course));
     return null;
   }
 
@@ -52,7 +52,10 @@ export class Room {
     if (!this.canStart) return false;
     this.round++;
     this.phase = 'racing';
-    this.racers = this.racers.map((r) => ({ ...newRacer(r.id, r.name, r.slot), ready: true }));
+    this.racers = this.racers.map((r) => ({
+      ...newRacer(r.id, r.name, r.slot, this.course),
+      ready: true,
+    }));
     return true;
   }
 
@@ -96,7 +99,9 @@ export class Room {
   rematch(): boolean {
     if (this.phase !== 'finished') return false;
     this.phase = 'lobby';
-    this.racers = this.racers.filter((r) => r.connected).map((r) => newRacer(r.id, r.name, r.slot));
+    this.racers = this.racers
+      .filter((r) => r.connected)
+      .map((r) => newRacer(r.id, r.name, r.slot, this.course));
     return true;
   }
 

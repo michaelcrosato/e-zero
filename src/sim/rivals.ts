@@ -8,30 +8,27 @@
  */
 import { FIELD_SIZE } from '../config/constants';
 import { clamp, lerp, mod } from '../core/math';
-import { BASE, RACE_DISTANCE, widthAt } from '../track/layout';
+import { BASE, RACE_DISTANCE } from '../track/layout';
 import { total } from '../track/spline';
-import { course, sampleCourse, gradeAcceleration } from '../track/course';
+import { course, sampleCourse, gradeAcceleration, courseWidthAt as widthAt } from '../track/course';
+import { skylineGrid, skylineLaneAt } from '../track/launch';
 import { shipPalettes } from '../render/palettes';
 import { game, player } from './state';
 import type { Rival } from './types';
 import { online, onlinePosition } from '../online/state';
 
-/** Starting grid: three staggered columns leave gaps to pass through. */
+/** Classic retains its original three-column grid. Skyline uses six. */
 const COLUMN_LANES = [-0.7, 0, 0.7];
 /** Irrational-ish step so idle weave never synchronises across the field. */
 const PHASE_STEP = 2.399963;
 
 function build(): Rival[] {
   return Array.from({ length: FIELD_SIZE - 1 }, (_, i) => {
-    const row = Math.floor(i / 3);
-    const column = i % 3;
-    const startS = 96 + row * 79 + column * 12;
-    const lane = COLUMN_LANES[column];
+    const { s: startS, x, lane } = grid(i);
     const phase = i * PHASE_STEP;
     // Rivals further up the grid are quicker, so the field is a real ladder.
     const level = i / (FIELD_SIZE - 2);
     const pace = 0.94 + level * 0.155 + Math.sin(i * 3.71) * 0.018;
-    const x = lane * (widthAt(startS) - 24);
     return {
       id: i + 1,
       name: 'RACER ' + String(i + 1).padStart(2, '0'),
@@ -58,10 +55,22 @@ function build(): Rival[] {
   });
 }
 
+function grid(index: number): { s: number; x: number; lane: number } {
+  if (course.id === 'skyline') return skylineGrid(index);
+  const column = index % 3;
+  const s = 96 + Math.floor(index / 3) * 79 + column * 12;
+  const lane = COLUMN_LANES[column];
+  return { s, x: lane * (widthAt(s) - 24), lane };
+}
+
 export const rivals: Rival[] = build();
 
 export function resetRivals(): void {
   for (const r of rivals) {
+    const start = grid(r.id - 1);
+    r.startS = start.s;
+    r.baseX = start.x;
+    r.lane = start.lane;
     r.s = r.startS;
     r.x = r.baseX;
     r.v = 0;
@@ -91,6 +100,15 @@ interface PackEntry {
   v: number;
 }
 
+function projectedLaneX(entry: PackEntry): number {
+  const ahead = entry.s + entry.v * 0.75;
+  const lane = entry.x / (widthAt(entry.s) - 24);
+  const change = entry.r
+    ? skylineLaneAt(ahead, (entry.r.id - 1) % 6) - skylineLaneAt(entry.s, (entry.r.id - 1) % 6)
+    : 0;
+  return (lane + change) * (widthAt(ahead) - 24);
+}
+
 /**
  * Decides throttle and lane for every rival.
  *
@@ -108,26 +126,44 @@ export function planTraffic(): void {
     const r = entry.r;
     if (!r) continue;
 
-    const near: Array<{ ds: number; x: number; v: number }> = [];
-    for (let k = -9; k <= 9; k++) {
+    const spatial = course.id === 'skyline';
+    const nextX = spatial ? projectedLaneX(entry) : r.x;
+    const near: Array<{ ds: number; x: number; nextX: number; v: number }> = [];
+    const neighbours = spatial ? 18 : 9;
+    for (let k = -neighbours; k <= neighbours; k++) {
       if (k === 0) continue;
       const q = pack[mod(i + k, pack.length)];
       const ds = mod(q.s - entry.s + total / 2, total) - total / 2;
-      if (Math.abs(ds) < 255) near.push({ ds, x: q.x, v: q.v });
+      if (Math.abs(ds) < 255)
+        near.push({ ds, x: q.x, nextX: spatial ? projectedLaneX(q) : q.x, v: q.v });
     }
 
     const lead = near
-      .filter((q) => q.ds > 0 && q.ds < 185 && Math.abs(q.x - r.x) < 32)
+      .filter(
+        (q) =>
+          q.ds > 0 &&
+          q.ds < (spatial ? 240 : 185) &&
+          (spatial
+            ? Math.abs(q.x - r.x) < 52 || Math.abs(q.nextX - nextX) < 52
+            : Math.abs(q.x - r.x) < 32),
+      )
       .sort((a, b) => a.ds - b.ds)[0];
 
     r.traffic = 1;
     if (lead && game.fieldTime > 1) {
       const cruise = BASE * r.pace * (r.boosting ? r.boostRatio : 1);
-      r.traffic = clamp((lead.v + Math.max(0, lead.ds - 52) * 2.2) / cruise, 0.38, 1);
+      // Anticipate a disappearing lane and leave a craft-length gap before merging.
+      r.traffic = clamp(
+        (lead.v + Math.max(0, lead.ds - (spatial ? 82 : 52)) * 2.2) / cruise,
+        0.38,
+        1,
+      );
 
       if (r.laneHold <= 0) {
         const limit = widthAt(r.s + 100) - 26;
-        const candidates = [-0.76, -0.38, 0, 0.38, 0.76];
+        const candidates = spatial
+          ? Array.from({ length: 6 }, (_, column) => skylineLaneAt(r.s + 100, column))
+          : [-0.76, -0.38, 0, 0.38, 0.76];
         let bestLane = r.targetLane;
         let bestScore = -Infinity;
         for (const lane of candidates) {
@@ -174,13 +210,23 @@ export function updateRivals(dt: number): void {
   for (const r of rivals) {
     const old = r.s;
     const limit = widthAt(r.s) - 24;
+    if (course.id === 'skyline') {
+      const lane = skylineLaneAt(r.s, (r.id - 1) % 6);
+      if (Math.abs(r.targetLane - r.lane) < 1e-6) r.targetLane = lane;
+      r.lane = lane;
+    }
     r.laneHold = Math.max(0, r.laneHold - dt);
 
+    // Look into the taper early enough to steer inward, rather than snapping at its rail.
+    const targetLimit =
+      course.id === 'skyline'
+        ? Math.min(limit, widthAt(r.s + Math.max(120, r.v * 0.5)) - 24)
+        : limit;
     // Wide sections give the pack more room; narrow ones squeeze it back in.
     const target = clamp(
-      r.targetLane * limit + Math.sin(r.s * 0.0018 + r.phase) * 4,
-      -limit,
-      limit,
+      r.targetLane * targetLimit + Math.sin(r.s * 0.0018 + r.phase) * 4,
+      -targetLimit,
+      targetLimit,
     );
     r.x = clamp(r.x + clamp(target - r.x, -60 * dt, 60 * dt), -limit, limit);
 

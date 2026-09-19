@@ -19,6 +19,20 @@ const motion = (seq: number, s = 100): Motion => ({
 });
 
 describe('private online rooms', () => {
+  it('spreads Skyline players across the wider lanes and preserves their grid on rematch', () => {
+    const room = new Room('host', 'Host', 'skyline');
+    for (let i = 1; i < 4; i++) {
+      room.join(`p${i}`, `Player ${i}`, PROTOCOL);
+      room.ready(`p${i}`, true);
+    }
+    const grid = room.racers.map((r) => r.x);
+    expect(grid[3] - grid[0]).toBe(196);
+    expect(room.start()).toBe(true);
+    expect(room.racers.map((r) => r.x)).toEqual(grid);
+    for (const racer of room.racers) room.motion(racer.id, 1, { ...motion(1), finishedAt: 90 });
+    expect(room.rematch()).toBe(true);
+    expect(room.racers.map((r) => r.x)).toEqual(grid);
+  });
   it('publishes the host course and rejects unknown course identifiers', () => {
     const room = new Room('host', 'Host', 'skyline');
     expect(room.message()).toMatchObject({ course: 'skyline' });

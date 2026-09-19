@@ -4,7 +4,8 @@
 
 **[Play it →](https://e-zero-phvn.vercel.app)**
 
-The default **Skyline Circuit** has real hills, banked turns, a vertical loop and
+The default **Skyline Circuit** has a six-lane starting grid that progressively
+merges to three lanes, plus real hills, banked turns, a vertical loop and
 a corkscrew. The craft and chase camera follow the road through all three axes;
 magnetic adhesion keeps you attached upside down. Choose **Neon Harbor · Classic**
 in the circuit selector to race the original flat course.

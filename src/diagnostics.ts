@@ -14,9 +14,16 @@ import { sound } from './audio/sound';
 import { surface } from './render/surface';
 import { rivals } from './sim/rivals';
 import { boostFX, game, player } from './sim/state';
-import { BASE, MAX, RACE_DISTANCE, widthAt } from './track/layout';
+import { BASE, MAX, RACE_DISTANCE } from './track/layout';
 import { total } from './track/spline';
-import { course, sampleCourse as sample, lateralDrift, gradeAcceleration } from './track/course';
+import {
+  course,
+  sampleCourse as sample,
+  lateralDrift,
+  gradeAcceleration,
+  courseWidthAt as widthAt,
+} from './track/course';
+import { skylineLaneCountAt, MERGE_START, MERGE_END } from './track/launch';
 import { sectionAt, skyline } from './track/spatial';
 import { spatialView } from './render/spatial-renderer';
 import { viewport } from './ui/viewport';
@@ -59,6 +66,7 @@ function createApi(loop: LoopHandle) {
         railHits: player.railHits,
         curve: sample(player.s).curve,
         halfWidth: widthAt(player.s),
+        lanes: course.id === 'skyline' ? skylineLaneCountAt(player.s) : 3,
         baseSpeed: BASE,
         legacyBaseSpeed: BASE / COURSE_SCALE,
         worldSpeed: player.v,
@@ -94,6 +102,7 @@ function createApi(loop: LoopHandle) {
         v: r.v,
         pace: r.pace,
         color: r.color,
+        halfWidth: widthAt(r.s),
         finishedAt: r.finishedAt,
       }));
     },
@@ -141,6 +150,7 @@ function createApi(loop: LoopHandle) {
         },
         drawnCraft: spatialView.drawnCraft,
         sections: skyline.sections.map((part) => ({ ...part })),
+        launch: { mergeStart: MERGE_START, mergeEnd: MERGE_END },
       };
     },
 

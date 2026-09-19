@@ -6,6 +6,7 @@ import { course, courseNames, isCourse, type CourseId } from '../track/course';
 import { total } from '../track/spline';
 import { el } from './dom';
 import { refreshBest } from './hud';
+import { resetRivals } from '../sim/rivals';
 
 /** Also used when a guest receives the host's course selection. */
 export function selectCourse(id: CourseId): boolean {
@@ -15,6 +16,7 @@ export function selectCourse(id: CourseId): boolean {
     return false;
   }
   course.id = id;
+  resetRivals();
   el.courseSelect.value = id;
   game.best = loadBest();
   game.demoS = id === 'classic' ? total * 0.085 : 0;

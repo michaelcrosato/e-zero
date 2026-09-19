@@ -1,6 +1,7 @@
 /** Small, versioned messages; never trust objects received from another browser. */
 import { isCourse, type CourseId } from '../track/course';
-export const PROTOCOL = 2;
+import { HALF } from '../config/constants';
+export const PROTOCOL = 3;
 export const MAX_PLAYERS = 4;
 export const ROOM_PATTERN = /^[A-Z2-9]{8}$/;
 
@@ -120,7 +121,12 @@ export function parseMessage(value: unknown): Message | null {
   return null;
 }
 
-export function newRacer(id: string, name: string, slot: number): Racer {
+export function newRacer(
+  id: string,
+  name: string,
+  slot: number,
+  course: CourseId = 'classic',
+): Racer {
   return {
     id,
     name: name.trim().slice(0, 16) || `PLAYER ${slot + 1}`,
@@ -128,7 +134,7 @@ export function newRacer(id: string, name: string, slot: number): Racer {
     ready: slot === 0,
     connected: true,
     s: 0,
-    x: (slot - 1.5) * 42,
+    x: (slot - 1.5) * (course === 'skyline' ? (HALF * 2) / 3 : 42),
     v: 0,
     boosting: false,
     finishedAt: null,

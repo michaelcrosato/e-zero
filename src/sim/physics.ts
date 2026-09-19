@@ -14,9 +14,16 @@ import { formatTime } from '../core/time';
 import { sound } from '../audio/sound';
 import { project } from '../render/project';
 import { surface } from '../render/surface';
-import { BASE, MAX, RACE_DISTANCE, pads, repair, repairX, widthAt } from '../track/layout';
+import { BASE, MAX, RACE_DISTANCE, pads, repair } from '../track/layout';
 import { total } from '../track/spline';
-import { course, sampleCourse as sample, gradeAcceleration, lateralDrift } from '../track/course';
+import {
+  course,
+  sampleCourse as sample,
+  gradeAcceleration,
+  lateralDrift,
+  courseWidthAt as widthAt,
+  courseRepairX as repairX,
+} from '../track/course';
 import { projectSpatial } from '../render/spatial-renderer';
 import { offset } from '../core/vector';
 import { announce } from '../ui/announce';

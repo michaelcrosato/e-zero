@@ -1,6 +1,8 @@
 import { vec, type Frame3 } from '../core/vector';
 import { sample } from './spline';
 import { sampleSpatial } from './spatial';
+import { widthAt } from './layout';
+import { skylineWidthAt } from './launch';
 
 export type CourseId = 'classic' | 'skyline';
 export const course = { id: 'classic' as CourseId };
@@ -10,6 +12,12 @@ export const courseNames: Record<CourseId, string> = {
 };
 export const isCourse = (value: unknown): value is CourseId =>
   value === 'classic' || value === 'skyline';
+
+export function courseWidthAt(s: number): number {
+  return course.id === 'skyline' ? skylineWidthAt(s) : widthAt(s);
+}
+
+export const courseRepairX = (s: number): number => -courseWidthAt(s) + 39;
 
 export function sampleCourse(s: number, lateral = 0): Frame3 {
   if (course.id === 'skyline') return sampleSpatial(s, lateral);

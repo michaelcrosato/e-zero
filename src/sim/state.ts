@@ -31,7 +31,7 @@ export function createPlayer(): Player {
 }
 
 function bestKey(): string {
-  return course.id === 'classic' ? BEST_KEY : BEST_KEY + '-skyline-v3';
+  return course.id === 'classic' ? BEST_KEY : BEST_KEY + '-skyline-v4';
 }
 
 export function loadBest(): number {

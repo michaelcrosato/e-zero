@@ -12,6 +12,10 @@ a corkscrew. The craft and chase camera follow the road through all three axes;
 magnetic adhesion keeps you attached upside down. Choose **Neon Harbor · Classic**
 in the circuit selector to race the original flat course.
 
+Skyline cruises at **2× its original base speed** for both you and the AI field.
+Boost still multiplies cruise by 2.4×, and the speedometer reflects the actual
+increase. Classic keeps its original pace.
+
 A 100-racer, three-lap anti-gravity racer with private online races for 2–4 friends.
 No image assets or game engine — the track, the city, the craft
 and the sky are all generated in code at load time. Skyline uses a small WebGL

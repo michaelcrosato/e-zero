@@ -14,7 +14,7 @@ import { sound } from './audio/sound';
 import { surface } from './render/surface';
 import { rivals } from './sim/rivals';
 import { boostFX, game, player } from './sim/state';
-import { BASE, MAX } from './track/layout';
+import { BASE } from './track/layout';
 import {
   course,
   sampleCourse as sample,
@@ -23,6 +23,9 @@ import {
   courseWidthAt as widthAt,
   courseLength,
   raceDistance,
+  courseBaseSpeed,
+  courseMaxSpeed,
+  courseSpeedMultiplier,
 } from './track/course';
 import { skylineLaneCountAt, MERGE_START, MERGE_END } from './track/launch';
 import { sectionAt, skyline } from './track/spatial';
@@ -74,13 +77,13 @@ function createApi(loop: LoopHandle) {
         curve: sample(player.s).curve,
         halfWidth: widthAt(player.s),
         lanes: course.id === 'skyline' ? skylineLaneCountAt(player.s) : 3,
-        baseSpeed: BASE,
+        baseSpeed: courseBaseSpeed(),
         legacyBaseSpeed: BASE / COURSE_SCALE,
         worldSpeed: player.v,
-        speedMultiplier: COURSE_SCALE,
+        speedMultiplier: COURSE_SCALE * courseSpeedMultiplier(),
         boosting: player.boosting,
         boostRatio: BOOST_RATIO,
-        boostTopSpeed: (MAX / BASE) * KMH,
+        boostTopSpeed: (courseMaxSpeed() / BASE) * KMH,
         boostFX: boostFX.amount,
         boostBurst: boostFX.burst,
         boostParticles: boostFX.particles.length,

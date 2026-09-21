@@ -12,7 +12,7 @@ import { drawMinimap } from '../render/minimap';
 import { boostFX, game, player } from '../sim/state';
 import { BASE } from '../track/layout';
 import { KMH } from '../config/constants';
-import { course, sampleCourse, courseLength, raceDistance } from '../track/course';
+import { course, sampleCourse, courseLength, raceDistance, courseBaseSpeed } from '../track/course';
 import { skylineLaneCountAt } from '../track/launch';
 import { sectionAt } from '../track/spatial';
 import { boostTouchButton, el } from './dom';
@@ -33,6 +33,7 @@ export function hideMessage(): void {
 }
 
 export function updateHUD(): void {
+  const speedRatio = player.v / courseBaseSpeed();
   const total = courseLength();
   const RACE_DISTANCE = raceDistance();
   const count = fieldSize();
@@ -106,7 +107,7 @@ export function updateHUD(): void {
   el.boostState.classList.toggle('active', boosting);
   el.boostState.classList.toggle('low', !boosting && low);
   el.boostLabel.textContent = boosting
-    ? 'HYPER · ' + (player.v / BASE).toFixed(2) + '×'
+    ? 'HYPER · ' + speedRatio.toFixed(2) + '×'
     : low
       ? 'POWER LOW'
       : 'BOOST READY';
@@ -115,7 +116,7 @@ export function updateHUD(): void {
   el.boostCallout.classList.toggle('show', boosting && boostFX.age < 1.15);
   boostTouchButton?.classList.toggle('firing', boosting);
 
-  const boostLevel = Math.round(clamp((player.v / BASE - 1) / (BOOST_RATIO - 1), 0, 1) * 12);
+  const boostLevel = Math.round(clamp((speedRatio - 1) / (BOOST_RATIO - 1), 0, 1) * 12);
   [...el.boostMeter.children].forEach((node, i) => node.classList.toggle('lit', i < boostLevel));
 
   el.damageFlash.style.opacity = String(game.damage);

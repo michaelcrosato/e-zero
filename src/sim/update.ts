@@ -9,7 +9,7 @@ import { reducedMotion } from '../core/env';
 import { angleDiff, lerp, smooth } from '../core/math';
 import { sound } from '../audio/sound';
 import { showResult, syncModeUI } from '../game/flow';
-import { BASE } from '../track/layout';
+import { courseBaseSpeed } from '../track/course';
 import { el } from '../ui/dom';
 import { hideMessage, showMessage, updateHUD } from '../ui/hud';
 import { updateBoostFX } from './boost';
@@ -50,7 +50,7 @@ export function update(dt: number): void {
   }
 
   if (game.mode === 'title') {
-    game.demoS += BASE * 0.9 * dt;
+    game.demoS += courseBaseSpeed() * 0.9 * dt;
   } else if (game.mode === 'countdown') {
     game.countTime -= dt;
     const num = Math.min(3, Math.ceil(game.countTime));

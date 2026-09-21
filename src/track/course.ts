@@ -1,8 +1,8 @@
 import { vec, type Frame3 } from '../core/vector';
 import { sample, total } from './spline';
 import { sampleSpatial, skyline } from './spatial';
-import { widthAt, pads, repair } from './layout';
-import { RACE_LAPS } from '../config/constants';
+import { BASE, widthAt, pads, repair } from './layout';
+import { BOOST_RATIO, RACE_LAPS } from '../config/constants';
 import { skylineWidthAt } from './launch';
 
 export type CourseId = 'classic' | 'skyline';
@@ -16,6 +16,10 @@ export const isCourse = (value: unknown): value is CourseId =>
 
 export const courseLength = (): number => (course.id === 'skyline' ? skyline.length : total);
 export const raceDistance = (): number => courseLength() * RACE_LAPS;
+/** Skyline doubles travel speed, independently of track size and the km/h conversion. */
+export const courseSpeedMultiplier = (): number => (course.id === 'skyline' ? 2 : 1);
+export const courseBaseSpeed = (): number => BASE * courseSpeedMultiplier();
+export const courseMaxSpeed = (): number => courseBaseSpeed() * BOOST_RATIO;
 export const skylinePads = pads.map((pad) => ({ ...pad, s: (pad.s / total) * skyline.length }));
 export const skylineRepair = { ...repair, s: (repair.s / total) * skyline.length };
 export const coursePads = () => (course.id === 'skyline' ? skylinePads : pads);

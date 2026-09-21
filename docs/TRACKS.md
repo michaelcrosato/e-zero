@@ -8,15 +8,15 @@ craft or create a 2–4-player room. Guests automatically load the host's course
 
 ## Nine-lane start and twelve sections
 
-Skyline is now 56,032 world units per lap: twice its previous length, with the same
-cruising and boost speeds. The nine-lane launch apron is 588 units wide. All 99
+Skyline is 56,032 world units per lap: twice its original length, now driven at
+twice the original cruising and boost speeds. The nine-lane launch apron is 588 units wide. All 99
 rivals occupy nine staggered columns with 237 units between rows. The entire grid
 fits before the first taper begins at 2,900 units.
 
 One lane merges away in each of the first six sections. Adjacent groups pair up
 across alternating parts of the road; lane markings and AI paths interpolate
-smoothly. The sixth reduction finishes near the halfway point, about 30 seconds
-into an unboosted lap, instead of the old roughly eight-second compression.
+smoothly. The sixth reduction finishes near the halfway point, about 15 seconds
+into an unboosted lap at the faster pace.
 
 | Section | Feature         | Lanes | Reason                                       |
 | ------- | --------------- | ----- | -------------------------------------------- |
@@ -44,7 +44,7 @@ still exactly twelve sections and no width jump at the lap seam.
 collisions, AI lane preferences and diagnostics use it consistently. AI anticipates
 narrower road and merging traffic before moving inward, with no lateral snaps.
 Online racers also start farther apart, and restarts/rematches restore the grid.
-Skyline best times use a new storage version for the changed length and layout.
+Skyline best times use a new storage version for the faster speed rules.
 
 ## Track representation
 
@@ -61,7 +61,7 @@ has a name, kind, length and target lane count, with additional parameters:
 
 Design dimensions are authoring units. `buildSpatial` measures the resulting 3D
 curve, scales it uniformly to the chosen lap length, and resamples by arc length.
-Skyline uses twice the lap length of Classic without scaling vehicle speed.
+Skyline uses twice the lap length and cruising speed of Classic.
 The world positions really change in all
 three dimensions; distance is never measured from the flattened minimap.
 
@@ -79,6 +79,11 @@ Angular interpolation handles the 360-to-zero seam without an extra rotation.
 for the terrain bake and exact Classic parity checks.
 
 ## Physics and rendering
+
+`courseBaseSpeed()` selects Skyline's 2× cruising speed or Classic's original
+pace. Player and AI use the same baseline; boost, brake, boost-pad kicks and
+autopilot speeds remain proportional to it. Speedometers retain their world-unit
+conversion, so the higher travel speed is also visible on the HUD and windshield.
 
 Steering, rail limits, impacts and lateral velocity all live in the road's frame.
 Gravity projected along the forward axis slows climbs and speeds descents; its

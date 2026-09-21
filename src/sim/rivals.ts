@@ -8,7 +8,6 @@
  */
 import { FIELD_SIZE } from '../config/constants';
 import { clamp, lerp, mod } from '../core/math';
-import { BASE } from '../track/layout';
 import {
   course,
   sampleCourse,
@@ -16,6 +15,7 @@ import {
   courseWidthAt as widthAt,
   courseLength,
   raceDistance,
+  courseBaseSpeed,
 } from '../track/course';
 import { skylineGrid, skylineLaneAt, GRID_COLUMNS } from '../track/launch';
 import { shipPalettes } from '../render/palettes';
@@ -124,6 +124,7 @@ function projectedLaneX(entry: PackEntry): number {
  * not need that resolution to look right.
  */
 export function planTraffic(): void {
+  const baseSpeed = courseBaseSpeed();
   const total = courseLength();
   const pack: PackEntry[] = rivals.map((r) => ({ r, s: mod(r.s, total), x: r.x, v: r.v }));
   pack.push({ r: null, s: mod(player.s, total), x: player.x, v: player.v });
@@ -159,7 +160,7 @@ export function planTraffic(): void {
 
     r.traffic = 1;
     if (lead && game.fieldTime > 1) {
-      const cruise = BASE * r.pace * (r.boosting ? r.boostRatio : 1);
+      const cruise = baseSpeed * r.pace * (r.boosting ? r.boostRatio : 1);
       // Anticipate a disappearing lane and leave a craft-length gap before merging.
       r.traffic = clamp(
         (lead.v + Math.max(0, lead.ds - (spatial ? 82 : 52)) * 2.2) / cruise,
@@ -208,6 +209,7 @@ const PLAN_INTERVAL = 0.12;
 
 export function updateRivals(dt: number): void {
   if (online.racing) return;
+  const baseSpeed = courseBaseSpeed();
   const RACE_DISTANCE = raceDistance();
   game.fieldTime += dt;
   game.trafficClock -= dt;
@@ -226,11 +228,14 @@ export function updateRivals(dt: number): void {
     }
     r.laneHold = Math.max(0, r.laneHold - dt);
 
-    // Look into the taper early enough to steer inward, rather than snapping at its rail.
-    const targetLimit =
-      course.id === 'skyline'
-        ? Math.min(limit, widthAt(r.s + Math.max(120, r.v * 0.5)) - 24)
-        : limit;
+    // At Skyline's faster boost pace, the 60-unit/s steering needs more lead time.
+    // Check the whole approach: its far end can widen again past a short narrow section.
+    let targetLimit = limit;
+    if (course.id === 'skyline') {
+      const ahead = Math.max(120, r.v * 0.25);
+      for (let step = 1; step <= 6; step++)
+        targetLimit = Math.min(targetLimit, widthAt(r.s + ahead * step) - 24);
+    }
     // Wide sections give the pack more room; narrow ones squeeze it back in.
     const target = clamp(
       r.targetLane * targetLimit + Math.sin(r.s * 0.0018 + r.phase) * 4,
@@ -247,7 +252,7 @@ export function updateRivals(dt: number): void {
       (game.fieldTime < r.launchBoost ||
         (game.fieldTime > r.launchBoost + 1.8 && boostAge < r.boostDuration));
 
-    const targetV = BASE * r.pace * pulse * (r.boosting ? r.boostRatio : 1) * r.traffic;
+    const targetV = baseSpeed * r.pace * pulse * (r.boosting ? r.boostRatio : 1) * r.traffic;
     r.v = lerp(r.v, targetV, 1 - Math.exp(-dt * (targetV < r.v ? 5 : r.acceleration)));
     if (course.id === 'skyline') r.v = Math.max(0, r.v + gradeAcceleration(sampleCourse(r.s)) * dt);
     r.s += r.v * dt;

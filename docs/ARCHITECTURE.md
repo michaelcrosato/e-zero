@@ -115,7 +115,10 @@ The active course is held in `track/course.ts`. `sampleCourse` returns a 3D road
 frame; Classic delegates its position and curvature to the original sampler.
 Skyline resolves gravity along and across the road, while magnetic adhesion holds
 craft to its normal through loops and corkscrews. Skyline is twice Classic's lap
-length at unchanged speeds. All active simulation, HUD, map and online lap math
+length and now uses twice its base cruising speed. `courseBaseSpeed()` and
+`courseMaxSpeed()` supply player, AI, boost-pad, demo and autopilot speeds. The
+km/h conversion stays fixed, while boost meters and engine modulation use the
+active course's baseline. All active simulation, HUD, map and online lap math
 uses `courseLength()` and `raceDistance()`. Boost/repair placement also follows
 the selected length. The original terrain bake and Classic constants stay fixed.
 Course selection changes best-time storage, never the cumulative-distance model.

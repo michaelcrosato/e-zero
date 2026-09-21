@@ -45,7 +45,11 @@ test('starts in nine lanes and drives all twelve section-specific widths over a 
     expect(state.stats.railHits).toBe(0);
     expect(state.stats.lap).toBe(1);
     expect(state.field.every((r) => Math.abs(r.x) + 22 < r.halfWidth)).toBe(true);
-    if (part.index === 6) expect(state.stats.time).toBeGreaterThan(25);
+    if (part.index === 6) {
+      // The same merge is reached in half the time at Skyline's new 2x cruise speed.
+      expect(state.stats.time).toBeGreaterThan(12.5);
+      expect(state.stats.time).toBeLessThan(22);
+    }
     await page.screenshot({
       path: testInfo.outputPath(`section-${part.index}-${part.lanes}-lanes.png`),
     });

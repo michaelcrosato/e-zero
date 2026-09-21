@@ -1,7 +1,8 @@
 /** Small, versioned messages; never trust objects received from another browser. */
 import { isCourse, type CourseId } from '../track/course';
 import { HALF } from '../config/constants';
-export const PROTOCOL = 4;
+// Older Skyline clients run at half speed and must refresh before racing this build.
+export const PROTOCOL = 5;
 export const MAX_PLAYERS = 4;
 export const ROOM_PATTERN = /^[A-Z2-9]{8}$/;
 

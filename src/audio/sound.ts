@@ -8,7 +8,7 @@
  */
 import { boostFX, game, player } from '../sim/state';
 import { ACTIVE_MODES, PAUSABLE_MODES } from '../sim/types';
-import { BASE } from '../track/layout';
+import { courseBaseSpeed } from '../track/course';
 import { announce } from '../ui/announce';
 import { el } from '../ui/dom';
 
@@ -293,7 +293,7 @@ export class Sound {
     const a = this.context;
     const t = a.currentTime;
     const active = ACTIVE_MODES.includes(game.mode);
-    const ratio = player.v / BASE;
+    const ratio = player.v / courseBaseSpeed();
     if (this.jetGain && this.jetFilter) {
       this.jetGain.gain.setTargetAtTime(active ? boostFX.amount * 0.16 : 0, t, 0.045);
       this.jetFilter.frequency.setTargetAtTime(1200 + ratio * 1050, t, 0.08);

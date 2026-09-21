@@ -14,7 +14,7 @@ import { formatTime } from '../core/time';
 import { sound } from '../audio/sound';
 import { project } from '../render/project';
 import { surface } from '../render/surface';
-import { BASE, MAX } from '../track/layout';
+import { BASE } from '../track/layout';
 import {
   course,
   sampleCourse as sample,
@@ -26,6 +26,8 @@ import {
   raceDistance,
   coursePads,
   courseRepair,
+  courseBaseSpeed,
+  courseMaxSpeed,
 } from '../track/course';
 import { projectSpatial } from '../render/spatial-renderer';
 import { offset } from '../core/vector';
@@ -61,7 +63,7 @@ export function spawnSparks(x: number, y: number, count = 12): void {
 /** Rail contact. The impulse scales with speed and how hard you arrived. */
 export function hitRail(side: number, limit: number): void {
   const approach = Math.abs(player.latV + player.kickV);
-  const impulse = clamp(400 + (player.v / BASE) * 105 + approach * 0.28, 440, 660);
+  const impulse = clamp(400 + (player.v / courseBaseSpeed()) * 105 + approach * 0.28, 440, 660);
 
   player.x = side * (limit - 3);
   player.latV = -side * 65;
@@ -136,6 +138,8 @@ function updateFreeLap(oldS: number, dt: number): void {
 }
 
 export function updateRace(dt: number, free = false): void {
+  const baseSpeed = courseBaseSpeed();
+  const maxSpeed = courseMaxSpeed();
   const total = courseLength();
   const RACE_DISTANCE = raceDistance();
   const pads = coursePads();
@@ -157,18 +161,18 @@ export function updateRace(dt: number, free = false): void {
   const boost = input.boost && player.power > BOOST_CUTOFF && !player.boostLock && !input.brake;
   player.boosting = !input.brake && (boost || player.pad > 0);
 
-  const target = input.brake ? BASE * 0.53 : player.boosting ? MAX : BASE;
+  const target = input.brake ? baseSpeed * 0.53 : player.boosting ? maxSpeed : baseSpeed;
   const acceleration = input.brake ? 7.0 : player.boosting ? 9.2 : target > player.v ? 4.2 : 2.55;
   player.v = lerp(player.v, target, 1 - Math.exp(-dt * acceleration));
   if (course.id === 'skyline')
-    player.v = clamp(player.v + gradeAcceleration(p) * dt, 0, MAX * 1.12);
+    player.v = clamp(player.v + gradeAcceleration(p) * dt, 0, maxSpeed * 1.12);
   player.power = clamp(player.power + (boost ? -14.5 : 3.3) * dt, 0, 100);
 
   player.steer = lerp(player.steer, input.steer, 1 - Math.exp(-dt * 12));
   // Cornering throws the craft outward, and harder the faster you go.
   const drift = lateralDrift(p, player.v);
   const authority = player.bounceTime > 0 ? 0.24 : 1;
-  const wanted = input.steer * (225 + (player.v / BASE) * 78) * authority + drift;
+  const wanted = input.steer * (225 + (player.v / baseSpeed) * 78) * authority + drift;
   player.latV = lerp(player.latV, wanted, 1 - Math.exp(-dt * 10));
   player.x += (player.latV + player.kickV) * dt;
   player.kickV *= Math.exp(-dt * 3.9);
@@ -189,7 +193,7 @@ export function updateRace(dt: number, free = false): void {
       player.pad = 1.1;
       game.padLock[i] = 2.5;
       if (!input.brake) {
-        player.v = Math.min(MAX, Math.max(player.v + BASE * 0.28, BASE * 1.65));
+        player.v = Math.min(maxSpeed, Math.max(player.v + baseSpeed * 0.28, baseSpeed * 1.65));
         player.boosting = true;
       }
       showMessage('BOOST STRIP', 0.8);
@@ -268,7 +272,7 @@ export function updateAutoPilot(dt: number): void {
   game.finishAge += dt;
   game.cinemaAge += dt;
 
-  player.v = lerp(player.v, BASE * 1.04, 1 - Math.exp(-dt * 1.7));
+  player.v = lerp(player.v, courseBaseSpeed() * 1.04, 1 - Math.exp(-dt * 1.7));
   const targetX = Math.sin(player.s * 0.0018) * 13;
   player.x = lerp(player.x, targetX, 1 - Math.exp(-dt * 3.0));
   player.latV = 0;

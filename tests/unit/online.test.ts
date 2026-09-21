@@ -19,6 +19,12 @@ const motion = (seq: number, s = 100): Motion => ({
 });
 
 describe('private online rooms', () => {
+  it('rejects clients using the old Skyline speed rules', () => {
+    const room = new Room('host', 'Host', 'skyline');
+    expect(room.join('old', 'Old client', 4)).toContain('version');
+    expect(room.racers).toHaveLength(1);
+    expect(room.join('current', 'Current client', PROTOCOL)).toBeNull();
+  });
   it('spreads Skyline players across the wider lanes and preserves their grid on rematch', () => {
     const room = new Room('host', 'Host', 'skyline');
     for (let i = 1; i < 4; i++) {

@@ -172,7 +172,7 @@ export function buildSpatial(
   };
 }
 
-// More physical distance, not a speed rescale: the field has time to separate before each merge.
+// Physical lap length is independent of the cruising speed in course.ts.
 const total = classicLength * 2;
 const built = buildSpatial(SKYLINE_DESIGN, total);
 const gridIndex = Math.floor(2200 / (total / built.frames.length));
